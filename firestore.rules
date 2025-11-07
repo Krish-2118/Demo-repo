@@ -1,0 +1,133 @@
+/**
+ * @file Firestore Security Rules for Smart Analytics Dashboard.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict admin-only access model. All data in all collections is considered sensitive and should only be accessible by authorized admin users.
+ *
+ * Data Structure:
+ * The Firestore database is organized into top-level collections for districts, records, specialDrives, convictions, detections, and fileUploads. The 'records', 'convictions', and 'detections' collections include a denormalized `districtId` field.
+ *
+ * Key Security Decisions:
+ * - No public data access is permitted.
+ * - Listing of any collections is disallowed to prevent unauthorized data enumeration.
+ * - The rules explicitly deny all write operations by default and require a custom function (isAdmin()) to grant access, ensuring that only authorized personnel can modify the data.
+ * - Data validation (beyond authorization) is relaxed to facilitate rapid prototyping.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the user is an admin.
+     * @return {boolean} True if the user is an admin, false otherwise.
+     * @note This is a placeholder. Replace with your actual admin role check.
+     */
+    function isAdmin() {
+      // TODO: Implement your admin role check here.
+      // Example: return request.auth.token.email == 'admin@example.com';
+      return false;
+    }
+
+    /**
+     * @description Security rules for the /districts collection.
+     * @path /districts/{districtId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for district data.
+     */
+    match /districts/{districtId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Security rules for the /districts/{districtId}/records collection.
+     * @path /districts/{districtId}/records/{recordId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for record data within a district.
+     */
+    match /districts/{districtId}/records/{recordId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Security rules for the /specialDrives collection.
+     * @path /specialDrives/{specialDriveId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for special drive data.
+     */
+    match /specialDrives/{specialDriveId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Security rules for the /convictions collection.
+     * @path /convictions/{convictionId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for conviction data.
+     */
+    match /convictions/{convictionId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Security rules for the /detections collection.
+     * @path /detections/{detectionId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for detection data.
+     */
+    match /detections/{detectionId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Security rules for the /fileUploads collection.
+     * @path /fileUploads/{fileUploadId}
+     * @allow (create) If the user is an admin.
+     * @deny (create) If the user is not an admin.
+     * @allow (get) If the user is an admin.
+     * @deny (get) If the user is not an admin.
+     * @principle Enforces admin-only access for file upload data.
+     */
+    match /fileUploads/{fileUploadId} {
+      allow get: if isAdmin();
+      allow list: if false; // Listing is disallowed for security reasons.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
