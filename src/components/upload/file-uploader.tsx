@@ -1,6 +1,6 @@
 'use client';
 import { UploadCloud } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useTransition } from 'react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { Button } from '../ui/button';
@@ -9,7 +9,7 @@ import { uploadPerformanceData } from '@/app/actions';
 
 export function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, startTransition] = useTransition();
   const { toast } = useToast();
 
   const onDrop = useCallback(
@@ -40,7 +40,7 @@ export function FileUploader() {
     maxFiles: 1,
   });
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!file) {
       toast({
         title: 'No file selected',
@@ -58,47 +58,49 @@ export function FileUploader() {
         return;
     }
     
-    setIsProcessing(true);
-    toast({
-      title: 'Upload Started',
-      description: `Processing ${file.name}...`,
-    });
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const binaryStr = event.target?.result;
-        if (!binaryStr) {
-          throw new Error("File content is empty");
-        }
-        const workbook = XLSX.read(binaryStr, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        const result = await uploadPerformanceData(jsonData);
-
-        if (result.success) {
-          toast({
-            title: 'Upload Successful',
-            description: result.message,
-          });
-          setFile(null); // Clear file after successful upload
-        } else {
-          throw new Error(result.message);
-        }
-      } catch (error) {
-        console.error("Error processing file:", error);
+    startTransition(() => {
         toast({
-          title: 'Upload Failed',
-          description: (error as Error).message || 'An unexpected error occurred.',
-          variant: 'destructive',
+            title: 'Upload Started',
+            description: `Processing ${file.name}...`,
         });
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-    reader.readAsBinaryString(file);
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+        try {
+            const binaryStr = event.target?.result;
+            if (!binaryStr) {
+            throw new Error("File content is empty");
+            }
+            const workbook = XLSX.read(binaryStr, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                raw: false, // This will format dates
+                dateNF: 'yyyy-mm-dd'
+            });
+
+            const result = await uploadPerformanceData(jsonData);
+
+            if (result.success) {
+            toast({
+                title: 'Upload Successful',
+                description: result.message,
+            });
+            setFile(null); // Clear file after successful upload
+            } else {
+            throw new Error(result.message);
+            }
+        } catch (error) {
+            console.error("Error processing file:", error);
+            toast({
+            title: 'Upload Failed',
+            description: (error as Error).message || 'An unexpected error occurred.',
+            variant: 'destructive',
+            });
+        }
+        };
+        reader.readAsBinaryString(file);
+    });
   };
 
   return (

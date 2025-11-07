@@ -1,10 +1,10 @@
 'use server';
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
-import { collection, addDoc, getFirestore, runTransaction, doc } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase/server';
 import { districts } from '@/lib/data';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { revalidatePath } from 'next/cache';
 
 export async function getAiSummary() {
   try {
@@ -28,30 +28,34 @@ export async function uploadPerformanceData(data: any[]) {
   const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
   try {
-    // Non-blocking writes
-    for (const row of data) {
-      const districtName = row.district?.toString().trim().toLowerCase();
-      const districtId = districtMap.get(districtName);
+    const promises = data.map(row => {
+        const districtName = row.district?.toString().trim().toLowerCase();
+        const districtId = districtMap.get(districtName);
 
-      if (!districtId) {
-        console.warn(`District not found: ${row.district}`);
-        continue;
-      }
+        if (!districtId) {
+            console.warn(`District not found: ${row.district}`);
+            return Promise.resolve(); // Skip this row
+        }
 
-      const record = {
-        districtId: districtId,
-        category: row.category,
-        value: Number(row.value),
-        date: new Date(row.date).toISOString(),
-      };
-      
-      // Using the non-blocking function
-      addDocumentNonBlocking(recordsCollection, record);
-    }
+        const record = {
+            districtId: districtId,
+            category: row.category,
+            value: Number(row.value),
+            date: new Date(row.date).toISOString(),
+        };
 
-    return { success: true, message: 'Data upload has started in the background.' };
+        return addDoc(recordsCollection, record);
+    });
+
+    await Promise.all(promises);
+
+    // Revalidate paths to show new data
+    revalidatePath('/dashboard');
+    revalidatePath('/leaderboard');
+
+    return { success: true, message: 'Data uploaded successfully.' };
   } catch (error) {
-    console.error('Error initiating data upload:', error);
-    return { success: false, message: 'Failed to initiate data upload.' };
+    console.error('Error uploading data:', error);
+    return { success: false, message: 'Failed to upload data.' };
   }
 }
