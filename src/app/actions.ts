@@ -10,7 +10,6 @@ import { revalidatePath } from 'next/cache';
 // Helper to initialize Firebase Admin and return Firestore instance
 function getAdminFirestore(): Firestore {
   if (!getApps().length) {
-    // projectId is read from the .env file
     initializeApp({
         projectId: process.env.FIREBASE_PROJECT_ID,
     });
@@ -67,64 +66,46 @@ export async function uploadPerformanceData(data: any[]) {
     const batch = firestore.batch();
 
     data.forEach(row => {
-        // Normalize district name from various possible keys
-        const districtKey = Object.keys(row).find(k => k.toLowerCase() === 'district');
-        if (!districtKey) {
-            console.warn(`District column not found in row:`, row);
-            return;
-        }
-        const districtName = row[districtKey]?.toString().trim().toLowerCase();
+        const districtName = row['District']?.toString().trim().toLowerCase();
         const districtId = districtMap.get(districtName);
-
-        if (!districtId) {
-            console.warn(`District not found: ${row[districtKey]}`);
-            return; // Skip this row
-        }
         
-        let recordDate;
-        // Normalize date from various possible keys
-        const dateKey = Object.keys(row).find(k => k.toLowerCase() === 'date');
-        if (!dateKey) {
-            console.warn(`Date column not found in row:`, row);
+        if (!districtId) {
+            console.warn(`District not found: ${row['District']}`);
             return;
         }
-        const dateValue = row[dateKey];
 
+        const dateValue = row['Date'];
+        let recordDate;
+        
         if (dateValue instanceof Date) {
             recordDate = dateValue;
-        } else if (typeof dateValue === 'number') { // Handle Excel serial date number
-          recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
-        } else { // Handle string dates (like YYYY-MM-DD from PDF)
-          recordDate = new Date(dateValue);
+        } else if (typeof dateValue === 'number') { // Excel serial date
+            recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
+        } else if (typeof dateValue === 'string') { // String date
+            recordDate = new Date(dateValue);
         }
 
-        if (isNaN(recordDate.getTime())) {
+        if (!recordDate || isNaN(recordDate.getTime())) {
             console.warn(`Invalid date for row:`, row);
-            return; // Skip if date is invalid
-        }
-
-        // Normalize category
-        const categoryKey = Object.keys(row).find(k => k.toLowerCase() === 'category');
-        if (!categoryKey) {
-            console.warn(`Category column not found in row:`, row);
             return;
         }
-        
-        // Normalize value
-        const valueKey = Object.keys(row).find(k => k.toLowerCase() === 'value');
-        if (!valueKey) {
-            console.warn(`Value column not found in row:`, row);
+
+        const category = row['Category'];
+        const value = Number(row['Value']);
+
+        if (!category || isNaN(value)) {
+            console.warn('Invalid category or value for row:', row);
             return;
         }
 
         const record = {
             districtId: districtId,
-            category: row[categoryKey],
-            value: Number(row[valueKey]),
+            category: category,
+            value: value,
             date: recordDate.toISOString(),
         };
 
-        const docRef = recordsCollection.doc(); // Auto-generate ID
+        const docRef = recordsCollection.doc();
         batch.set(docRef, record);
     });
 
