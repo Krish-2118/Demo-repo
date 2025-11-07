@@ -66,31 +66,34 @@ export async function uploadPerformanceData(data: any[]) {
     const batch = firestore.batch();
     let recordsAdded = 0;
 
-    data.forEach(row => {
+    for (const row of data) {
         const districtName = row['District']?.toString().trim().toLowerCase();
         const districtId = districtMap.get(districtName);
         
         if (!districtId) {
             console.warn(`District not found, skipping row:`, row);
-            return;
+            continue;
         }
 
         const dateValue = row['Date'];
-        let recordDate;
+        let recordDate: Date;
         
         if (dateValue instanceof Date) {
             recordDate = dateValue;
-        } else if (typeof dateValue === 'number') { // Excel serial date
+        } else if (typeof dateValue === 'number') { 
             // Excel stores dates as number of days since 1900-01-01.
             // 25569 is the number of days between 1900-01-01 and 1970-01-01 (Unix epoch).
             recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
-        } else if (typeof dateValue === 'string') { // String date
+        } else if (typeof dateValue === 'string') {
             recordDate = new Date(dateValue);
+        } else {
+            console.warn(`Invalid date format, skipping row:`, row);
+            continue;
         }
 
-        if (!recordDate || isNaN(recordDate.getTime())) {
-            console.warn(`Invalid date, skipping row:`, row);
-            return;
+        if (isNaN(recordDate.getTime())) {
+            console.warn(`Invalid date value, skipping row:`, row);
+            continue;
         }
 
         const category = row['Category'];
@@ -98,7 +101,7 @@ export async function uploadPerformanceData(data: any[]) {
 
         if (!category || isNaN(value)) {
             console.warn('Invalid category or value, skipping row:', row);
-            return;
+            continue;
         }
 
         const record = {
@@ -111,10 +114,10 @@ export async function uploadPerformanceData(data: any[]) {
         const docRef = recordsCollection.doc();
         batch.set(docRef, record);
         recordsAdded++;
-    });
+    }
 
     if (recordsAdded === 0) {
-      return { success: false, message: 'Upload failed. No valid records with recognizable districts and dates were found in the file.' };
+      return { success: false, message: 'Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.' };
     }
 
     await batch.commit();
@@ -125,7 +128,7 @@ export async function uploadPerformanceData(data: any[]) {
     return { success: true, message: `${recordsAdded} records uploaded successfully.` };
   } catch (error) {
     console.error('Error uploading data:', error);
-    return { success: false, message: 'Failed to upload data.' };
+    return { success: false, message: 'Failed to upload data due to a server error.' };
   }
 }
 
