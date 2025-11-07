@@ -10,6 +10,8 @@ import { revalidatePath } from 'next/cache';
 // Helper to initialize Firebase Admin and return Firestore instance
 function getAdminFirestore(): Firestore {
   if (!getApps().length) {
+    // This will use the service account credentials on App Hosting
+    // or the FIREBASE_PROJECT_ID from .env for local development.
     initializeApp({
         projectId: process.env.FIREBASE_PROJECT_ID,
     });
@@ -64,13 +66,14 @@ export async function uploadPerformanceData(data: any[]) {
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
     const batch = firestore.batch();
+    let recordsAdded = 0;
 
     data.forEach(row => {
         const districtName = row['District']?.toString().trim().toLowerCase();
         const districtId = districtMap.get(districtName);
         
         if (!districtId) {
-            console.warn(`District not found: ${row['District']}`);
+            console.warn(`District not found, skipping row:`, row);
             return;
         }
 
@@ -88,7 +91,7 @@ export async function uploadPerformanceData(data: any[]) {
         }
 
         if (!recordDate || isNaN(recordDate.getTime())) {
-            console.warn(`Invalid date for row:`, row);
+            console.warn(`Invalid date, skipping row:`, row);
             return;
         }
 
@@ -96,7 +99,7 @@ export async function uploadPerformanceData(data: any[]) {
         const value = Number(row['Value']);
 
         if (!category || isNaN(value)) {
-            console.warn('Invalid category or value for row:', row);
+            console.warn('Invalid category or value, skipping row:', row);
             return;
         }
 
@@ -109,14 +112,19 @@ export async function uploadPerformanceData(data: any[]) {
 
         const docRef = recordsCollection.doc();
         batch.set(docRef, record);
+        recordsAdded++;
     });
+
+    if (recordsAdded === 0) {
+      return { success: false, message: 'No valid records found to upload.' };
+    }
 
     await batch.commit();
 
     revalidatePath('/dashboard');
     revalidatePath('/leaderboard');
 
-    return { success: true, message: 'Data uploaded successfully.' };
+    return { success: true, message: `${recordsAdded} records uploaded successfully.` };
   } catch (error) {
     console.error('Error uploading data:', error);
     return { success: false, message: 'Failed to upload data.' };
@@ -126,7 +134,10 @@ export async function uploadPerformanceData(data: any[]) {
 export async function parsePdf(fileAsDataUrl: string) {
   try {
     const result = await extractDataFromPdf({ pdfDataUri: fileAsDataUrl });
-    return { success: true, data: result.data };
+    if (result && result.data) {
+        return { success: true, data: result.data };
+    }
+    return { success: false, message: 'AI could not find data in the PDF.' };
   } catch (error) {
     console.error('Error parsing PDF with AI:', error);
     return { success: false, message: 'Failed to parse PDF.' };
