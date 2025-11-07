@@ -6,11 +6,11 @@ export type District = {
 export type Category = 'NBW' | 'Conviction' | 'Narcotics' | 'Missing Person';
 
 export type Record = {
-  id: number;
+  id: string; // Changed to string to match firestore doc id
   districtId: number;
   category: Category;
   value: number;
-  date: string; // YYYY-MM-DD
+  date: string; // ISO Date String
 };
 
 export type PerformanceMetric = {

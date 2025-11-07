@@ -1,6 +1,9 @@
 'use server';
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
+import { collection, addDoc, getFirestore, runTransaction, doc, getDoc, setDoc } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
+import { districts } from '@/lib/data';
 
 export async function getAiSummary() {
   try {
@@ -15,5 +18,40 @@ export async function getAiSummary() {
   } catch (error) {
     console.error('Error generating AI summary:', error);
     return 'Could not generate summary at this time.';
+  }
+}
+
+export async function uploadPerformanceData(data: any[]) {
+  const { firestore } = initializeFirebase();
+  const recordsCollection = collection(firestore, 'records');
+  const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
+
+  try {
+    await runTransaction(firestore, async (transaction) => {
+      for (const row of data) {
+        const districtName = row.district?.toString().trim().toLowerCase();
+        const districtId = districtMap.get(districtName);
+
+        if (!districtId) {
+          console.warn(`District not found: ${row.district}`);
+          continue;
+        }
+
+        const record = {
+          districtId: districtId,
+          category: row.category,
+          value: Number(row.value),
+          date: new Date(row.date).toISOString(),
+        };
+
+        const newRecordRef = doc(recordsCollection);
+        transaction.set(newRecordRef, record);
+      }
+    });
+
+    return { success: true, message: 'Data uploaded successfully.' };
+  } catch (error) {
+    console.error('Error uploading data:', error);
+    return { success: false, message: 'Failed to upload data.' };
   }
 }

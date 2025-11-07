@@ -2,11 +2,14 @@
 import { UploadCloud } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import * as XLSX from 'xlsx';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { uploadPerformanceData } from '@/app/actions';
 
 export function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const onDrop = useCallback(
@@ -36,7 +39,7 @@ export function FileUploader() {
     maxFiles: 1,
   });
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) {
       toast({
         title: 'No file selected',
@@ -45,11 +48,48 @@ export function FileUploader() {
       });
       return;
     }
-    // Placeholder for actual upload logic
+    
+    setIsProcessing(true);
     toast({
       title: 'Upload Started',
-      description: `Uploading ${file.name}... (This is a placeholder)`,
+      description: `Processing ${file.name}...`,
     });
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const binaryStr = event.target?.result;
+        if (!binaryStr) {
+          throw new Error("File content is empty");
+        }
+        const workbook = XLSX.read(binaryStr, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const result = await uploadPerformanceData(jsonData);
+
+        if (result.success) {
+          toast({
+            title: 'Upload Successful',
+            description: result.message,
+          });
+          setFile(null); // Clear file after successful upload
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        console.error("Error processing file:", error);
+        toast({
+          title: 'Upload Failed',
+          description: (error as Error).message || 'An unexpected error occurred.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   return (
@@ -84,8 +124,8 @@ export function FileUploader() {
           Selected file: <strong>{file.name}</strong>
         </div>
       )}
-      <Button onClick={handleUpload} disabled={!file} className="w-full md:w-auto mx-auto">
-        Parse and Save Records
+      <Button onClick={handleUpload} disabled={!file || isProcessing} className="w-full md:w-auto mx-auto">
+        {isProcessing ? 'Processing...' : 'Parse and Save Records'}
       </Button>
     </div>
   );

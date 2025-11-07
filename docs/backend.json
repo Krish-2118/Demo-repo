@@ -31,8 +31,8 @@
           "description": "Unique identifier for the Record entity."
         },
         "districtId": {
-          "type": "string",
-          "description": "Reference to District. (Relationship: District 1:N Record)"
+          "type": "number",
+          "description": "Reference to District."
         },
         "category": {
           "type": "string",
@@ -227,18 +227,14 @@
         }
       },
       {
-        "path": "/districts/{districtId}/records/{recordId}",
+        "path": "/records/{recordId}",
         "definition": {
           "entityName": "Record",
           "schema": {
             "$ref": "#/backend/entities/Record"
           },
-          "description": "Stores individual police records associated with a district. Includes 'districtId' for authorization independence. Unique ID is the document ID.",
+          "description": "Stores individual police records. Unique ID is the document ID.",
           "params": [
-            {
-              "name": "districtId",
-              "description": "Unique identifier for the police district."
-            },
             {
               "name": "recordId",
               "description": "Unique identifier for the record."
