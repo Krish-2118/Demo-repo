@@ -21,6 +21,28 @@ export async function getAiSummary() {
   }
 }
 
+export async function uploadManualRecord(data: {districtId: number, category: string, value: number, date: Date}) {
+  try {
+    const { firestore } = await initializeFirebase();
+    const record = {
+      districtId: data.districtId,
+      category: data.category,
+      value: Number(data.value),
+      date: data.date.toISOString(),
+    };
+    await firestore.collection('records').add(record);
+    
+    revalidatePath('/dashboard');
+    revalidatePath('/leaderboard');
+
+    return { success: true, message: 'Record added successfully.' };
+  } catch (error) {
+    console.error('Error uploading manual record:', error);
+    return { success: false, message: 'Failed to add record.' };
+  }
+}
+
+
 export async function uploadPerformanceData(data: any[]) {
   try {
     const { firestore } = await initializeFirebase();

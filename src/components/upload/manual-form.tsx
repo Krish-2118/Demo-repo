@@ -33,7 +33,7 @@ import { format } from 'date-fns';
 import { districts, categoryLabels } from '@/lib/data';
 import type { Category } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { uploadPerformanceData } from '@/app/actions';
+import { uploadManualRecord } from '@/app/actions';
 import { useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -62,16 +62,14 @@ export function ManualForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        const singleRecord = [
-            {
-                district: districts.find(d => d.id.toString() === values.district)?.name,
-                category: values.category,
-                value: values.value,
-                date: values.date,
-            }
-        ]
+        const record = {
+            districtId: parseInt(values.district),
+            category: values.category,
+            value: values.value,
+            date: values.date,
+        }
 
-        const result = await uploadPerformanceData(singleRecord);
+        const result = await uploadManualRecord(record);
 
         if (result.success) {
           toast({
