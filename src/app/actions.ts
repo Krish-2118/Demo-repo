@@ -2,18 +2,17 @@
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getApps, initializeApp, App } from 'firebase-admin/app';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
-// Helper function to initialize Firebase Admin SDK
-function initAdmin() {
+// Helper to initialize Firebase Admin and return Firestore instance
+function getAdminFirestore(): Firestore {
   if (!getApps().length) {
-    // When running in a Google Cloud environment, the SDK can automatically
-    // detect the service account credentials and project ID from the environment.
+    // projectId is read from the .env file
     initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID,
+        projectId: process.env.FIREBASE_PROJECT_ID,
     });
   }
   return getFirestore();
@@ -37,7 +36,7 @@ export async function getAiSummary() {
 
 export async function uploadManualRecord(data: {districtId: number, category: string, value: number, date: Date}) {
   try {
-    const firestore = initAdmin();
+    const firestore = getAdminFirestore();
 
     const record = {
       districtId: data.districtId,
@@ -61,7 +60,7 @@ export async function uploadManualRecord(data: {districtId: number, category: st
 
 export async function uploadPerformanceData(data: any[]) {
   try {
-    const firestore = initAdmin();
+    const firestore = getAdminFirestore();
     const recordsCollection = firestore.collection('records');
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
@@ -95,7 +94,7 @@ export async function uploadPerformanceData(data: any[]) {
             recordDate = dateValue;
         } else if (typeof dateValue === 'number') { // Handle Excel serial date number
           recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
-        } else { // Handle string dates
+        } else { // Handle string dates (like YYYY-MM-DD from PDF)
           recordDate = new Date(dateValue);
         }
 
