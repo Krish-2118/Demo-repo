@@ -38,14 +38,15 @@ export async function uploadPerformanceData(data: any[]) {
             return; // Skip this row
         }
         
-        // The input `row.date` might be a string or a Date object.
-        // Excel dates can sometimes be parsed as numbers, so robust handling is needed.
         let recordDate;
-        if (typeof row.date === 'number') { // Handle Excel serial date number
-          // XLSX library with `cellDates: true` is better, but this is a fallback.
+        // The input `row.date` can be a Date object (from manual form) or a string/number (from file upload).
+        if (row.date instanceof Date) {
+            recordDate = row.date;
+        } else if (typeof row.date === 'number') { // Handle Excel serial date number
           // This formula converts Excel's serial date number to a JS Date.
+          // It assumes the date is not from the 1900 bug era in Excel.
           recordDate = new Date(Math.round((row.date - 25569) * 86400 * 1000));
-        } else {
+        } else { // Handle string dates
           recordDate = new Date(row.date);
         }
 
