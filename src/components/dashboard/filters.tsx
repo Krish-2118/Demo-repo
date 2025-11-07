@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import { Calendar as CalendarIcon, Download } from 'lucide-react';
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+import * as XLSX from 'xlsx';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,32 +22,73 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { districts, categoryLabels } from '@/lib/data';
-import type { Category } from '@/lib/types';
+import type { Category, Record } from '@/lib/types';
+import { useTransition } from 'react';
 
-export function Filters() {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 4, 1),
-    to: addDays(new Date(2023, 4, 1), 30),
-  });
+type FiltersProps = {
+  onFilterChange: (filters: {
+    district: string;
+    category: Category | 'all';
+    dateRange: DateRange;
+  }) => void;
+  initialFilters: {
+    district: string;
+    category: Category | 'all';
+    dateRange: DateRange;
+  };
+  allRecords: Record[];
+};
+
+export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersProps) {
+  const [district, setDistrict] = React.useState(initialFilters.district);
+  const [category, setCategory] = React.useState<Category | 'all'>(
+    initialFilters.category
+  );
+  const [date, setDate] = React.useState<DateRange | undefined>(
+    initialFilters.dateRange
+  );
+  const [isPending, startTransition] = useTransition();
+
+
+  React.useEffect(() => {
+    onFilterChange({ district, category, dateRange: date || {} });
+  }, [district, category, date, onFilterChange]);
+
+
+  const handleExport = () => {
+    startTransition(() => {
+        const dataToExport = allRecords.map(record => ({
+            District: districts.find(d => d.id === record.districtId)?.name || 'Unknown',
+            Category: record.category,
+            Value: record.value,
+            Date: format(new Date(record.date), 'yyyy-MM-dd')
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "PerformanceData");
+        XLSX.writeFile(workbook, `PolicePerformanceReport_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+    });
+  };
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
       <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-        <Select defaultValue="all">
+        <Select value={district} onValueChange={setDistrict}>
           <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Select District" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Districts</SelectItem>
-            {districts.map((district) => (
-              <SelectItem key={district.id} value={district.name.toLowerCase()}>
-                {district.name}
+            {districts.map((d) => (
+              <SelectItem key={d.id} value={d.name.toLowerCase()}>
+                {d.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select defaultValue="all">
+        <Select value={category} onValueChange={(value) => setCategory(value as Category | 'all')}>
           <SelectTrigger className="w-full md:w-[200px]">
             <SelectValue placeholder="Select Category" />
           </SelectTrigger>
@@ -99,9 +141,9 @@ export function Filters() {
           </Popover>
         </div>
       </div>
-      <Button>
+      <Button onClick={handleExport} disabled={isPending}>
         <Download className="mr-2 h-4 w-4" />
-        Export Report
+        {isPending ? 'Exporting...' : 'Export Report'}
       </Button>
     </div>
   );

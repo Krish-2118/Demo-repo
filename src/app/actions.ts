@@ -1,9 +1,10 @@
 'use server';
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
-import { collection, addDoc, getFirestore, runTransaction, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getFirestore, runTransaction, doc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { districts } from '@/lib/data';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export async function getAiSummary() {
   try {
@@ -27,31 +28,30 @@ export async function uploadPerformanceData(data: any[]) {
   const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
   try {
-    await runTransaction(firestore, async (transaction) => {
-      for (const row of data) {
-        const districtName = row.district?.toString().trim().toLowerCase();
-        const districtId = districtMap.get(districtName);
+    // Non-blocking writes
+    for (const row of data) {
+      const districtName = row.district?.toString().trim().toLowerCase();
+      const districtId = districtMap.get(districtName);
 
-        if (!districtId) {
-          console.warn(`District not found: ${row.district}`);
-          continue;
-        }
-
-        const record = {
-          districtId: districtId,
-          category: row.category,
-          value: Number(row.value),
-          date: new Date(row.date).toISOString(),
-        };
-
-        const newRecordRef = doc(recordsCollection);
-        transaction.set(newRecordRef, record);
+      if (!districtId) {
+        console.warn(`District not found: ${row.district}`);
+        continue;
       }
-    });
 
-    return { success: true, message: 'Data uploaded successfully.' };
+      const record = {
+        districtId: districtId,
+        category: row.category,
+        value: Number(row.value),
+        date: new Date(row.date).toISOString(),
+      };
+      
+      // Using the non-blocking function
+      addDocumentNonBlocking(recordsCollection, record);
+    }
+
+    return { success: true, message: 'Data upload has started in the background.' };
   } catch (error) {
-    console.error('Error uploading data:', error);
-    return { success: false, message: 'Failed to upload data.' };
+    console.error('Error initiating data upload:', error);
+    return { success: false, message: 'Failed to initiate data upload.' };
   }
 }
