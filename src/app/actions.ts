@@ -6,6 +6,17 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
+// Helper function to initialize Firebase Admin SDK
+function initAdmin() {
+  // Check if an app is already initialized to prevent re-initialization
+  if (!getApps().length) {
+    // When running in a Google Cloud environment, the SDK can automatically
+    // detect the service account credentials and project ID.
+    initializeApp();
+  }
+  return getFirestore();
+}
+
 export async function getAiSummary() {
   try {
     const result = await generateDistrictPerformanceSummary({
@@ -24,10 +35,7 @@ export async function getAiSummary() {
 
 export async function uploadManualRecord(data: {districtId: number, category: string, value: number, date: Date}) {
   try {
-    if (getApps().length === 0) {
-        initializeApp();
-    }
-    const firestore = getFirestore();
+    const firestore = initAdmin();
 
     const record = {
       districtId: data.districtId,
@@ -35,6 +43,7 @@ export async function uploadManualRecord(data: {districtId: number, category: st
       value: Number(data.value),
       date: data.date.toISOString(),
     };
+
     await firestore.collection('records').add(record);
     
     revalidatePath('/dashboard');
@@ -50,10 +59,7 @@ export async function uploadManualRecord(data: {districtId: number, category: st
 
 export async function uploadPerformanceData(data: any[]) {
   try {
-    if (getApps().length === 0) {
-        initializeApp();
-    }
-    const firestore = getFirestore();
+    const firestore = initAdmin();
     const recordsCollection = firestore.collection('records');
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
@@ -69,12 +75,9 @@ export async function uploadPerformanceData(data: any[]) {
         }
         
         let recordDate;
-        // The input `row.date` can be a Date object (from manual form) or a string/number (from file upload).
         if (row.date instanceof Date) {
             recordDate = row.date;
         } else if (typeof row.date === 'number') { // Handle Excel serial date number
-          // This formula converts Excel's serial date number to a JS Date.
-          // It assumes the date is not from the 1900 bug era in Excel.
           recordDate = new Date(Math.round((row.date - 25569) * 86400 * 1000));
         } else { // Handle string dates
           recordDate = new Date(row.date);
@@ -98,14 +101,12 @@ export async function uploadPerformanceData(data: any[]) {
 
     await batch.commit();
 
-    // Revalidate paths to show new data
     revalidatePath('/dashboard');
     revalidatePath('/leaderboard');
 
     return { success: true, message: 'Data uploaded successfully.' };
   } catch (error) {
     console.error('Error uploading data:', error);
-    // Return a more specific error if possible, but for now, this is okay.
     return { success: false, message: 'Failed to upload data.' };
   }
 }
