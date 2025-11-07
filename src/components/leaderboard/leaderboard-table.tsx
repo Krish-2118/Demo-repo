@@ -19,7 +19,10 @@ import { Skeleton } from '../ui/skeleton';
 
 export function LeaderboardTable() {
     const firestore = useFirestore();
-    const recordsQuery = useMemoFirebase(() => collection(firestore, 'records'), [firestore]);
+    const recordsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return collection(firestore, 'records');
+    }, [firestore]);
     const { data: records, isLoading } = useCollection<PerformanceRecord>(recordsQuery);
 
     const leaderboardData = useMemo(() => {

@@ -29,6 +29,9 @@ const toDate = (date: any): Date => {
   if (typeof date === 'string') {
     return new Date(date);
   }
+  if (date && typeof date.toDate === 'function') {
+    return date.toDate();
+  }
   // Fallback for other potential types or null/undefined
   return new Date();
 };
