@@ -4,7 +4,6 @@ import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district
 import { initializeFirebase } from '@/firebase/server';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
-import { getFirestore } from 'firebase-admin/firestore';
 
 export async function getAiSummary() {
   try {
