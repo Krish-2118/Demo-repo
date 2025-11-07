@@ -8,37 +8,50 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-const previewData = [
-    { district: 'Ganjam', category: 'NBW', value: '120', date: '2023-05-15' },
-    { district: 'Cuttack', category: 'Conviction', value: '55', date: '2023-05-20' },
-    { district: 'Bhubaneswar', category: 'Narcotics', value: '22', date: '2023-05-10' },
-    { district: 'Puri', category: 'Missing Person', value: '18', date: '2023-05-05' },
-];
+interface DataPreviewProps {
+    data: any[];
+}
 
-export function DataPreview() {
+export function DataPreview({ data }: DataPreviewProps) {
+    if (data.length === 0) {
+        return (
+             <Card className="rounded-xl shadow-lg mt-6">
+                <CardHeader>
+                    <CardTitle>Data Preview</CardTitle>
+                    <CardDescription>A preview of the first few rows from your uploaded file will appear here once processed.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center text-muted-foreground p-8">
+                        No data processed yet. Upload a file to see the preview.
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    const headers = Object.keys(data[0] || {});
+
     return (
         <Card className="rounded-xl shadow-lg mt-6">
             <CardHeader>
                 <CardTitle>Data Preview</CardTitle>
-                <CardDescription>A preview of the first few rows from your uploaded file will appear here.</CardDescription>
+                <CardDescription>A preview of the first 5 rows from your processed file. Please verify before saving.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>District</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Value</TableHead>
-                            <TableHead>Date</TableHead>
+                            {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {previewData.map((row, index) => (
+                        {data.slice(0, 5).map((row, index) => (
                             <TableRow key={index}>
-                                <TableCell>{row.district}</TableCell>
-                                <TableCell>{row.category}</TableCell>
-                                <TableCell>{row.value}</TableCell>
-                                <TableCell>{row.date}</TableCell>
+                                {headers.map(header => (
+                                    <TableCell key={header}>
+                                        {typeof row[header] === 'object' ? JSON.stringify(row[header]) : row[header]}
+                                    </TableCell>
+                                ))}
                             </TableRow>
                         ))}
                     </TableBody>

@@ -5,12 +5,78 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { uploadPerformanceData } from '@/app/actions';
+import { uploadPerformanceData, parsePdf } from '@/app/actions';
+import { DataPreview } from './data-preview';
 
 export function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, startTransition] = useTransition();
+  const [parsedData, setParsedData] = useState<any[]>([]);
+  const [isProcessing, startProcessing] = useTransition();
+  const [isSaving, startSaving] = useTransition();
   const { toast } = useToast();
+
+  const processFile = (fileToProcess: File) => {
+    startProcessing(() => {
+        toast({
+            title: 'Processing File',
+            description: `Parsing ${fileToProcess.name}...`,
+        });
+
+        if (fileToProcess.type.includes('spreadsheet') || fileToProcess.type.includes('csv') || fileToProcess.type.includes('excel')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const binaryStr = event.target?.result;
+                    if (!binaryStr) throw new Error("File content is empty");
+
+                    const workbook = XLSX.read(binaryStr, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                        raw: false,
+                        dateNF: 'yyyy-mm-dd'
+                    });
+                    setParsedData(jsonData);
+                    toast({
+                        title: 'Processing Complete',
+                        description: 'Please review the data preview below.',
+                    });
+                } catch (error) {
+                    handleError(error, 'Error processing spreadsheet.');
+                }
+            };
+            reader.readAsBinaryString(fileToProcess);
+        } else if (fileToProcess.type === 'application/pdf') {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const dataUrl = event.target?.result as string;
+                    if (!dataUrl) throw new Error("Could not read PDF file.");
+
+                    const result = await parsePdf(dataUrl);
+                    if (result.success && result.data) {
+                        setParsedData(result.data);
+                        toast({
+                            title: 'PDF Processing Complete',
+                            description: 'AI has extracted the data. Please review the preview below.',
+                        });
+                    } else {
+                        throw new Error(result.message || 'Failed to extract data from PDF.');
+                    }
+                } catch (error) {
+                    handleError(error, 'Error processing PDF.');
+                }
+            };
+            reader.readAsDataURL(fileToProcess);
+        } else {
+            toast({
+                title: 'Unsupported File Type',
+                description: 'Please upload a CSV, XLSX, or PDF file.',
+                variant: 'destructive'
+            });
+        }
+    });
+  }
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: any[]) => {
@@ -22,7 +88,12 @@ export function FileUploader() {
         });
         return;
       }
-      setFile(acceptedFiles[0]);
+      const newFile = acceptedFiles[0];
+      setFile(newFile);
+      setParsedData([]); // Reset preview
+      if(newFile) {
+        processFile(newFile);
+      }
     },
     [toast]
   );
@@ -32,76 +103,56 @@ export function FileUploader() {
     accept: {
       'text/csv': ['.csv'],
       'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
-        '.xlsx',
-      ],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/pdf': ['.pdf'],
     },
     maxFiles: 1,
   });
 
-  const handleUpload = () => {
-    if (!file) {
+  const handleError = (error: any, title: string) => {
+    console.error(title, error);
+    toast({
+      title: title,
+      description: (error as Error).message || 'An unexpected error occurred.',
+      variant: 'destructive',
+    });
+  };
+
+  const handleSave = () => {
+    if (parsedData.length === 0) {
       toast({
-        title: 'No file selected',
-        description: 'Please select a file to upload.',
+        title: 'No Data to Save',
+        description: 'Please process a file before saving.',
         variant: 'destructive',
       });
       return;
     }
-
-    if (file.type === 'application/pdf') {
-        toast({
-            title: 'PDF Upload',
-            description: 'PDF file selected. Processing for PDF files is coming soon!',
-        });
-        return;
-    }
     
-    startTransition(() => {
+    startSaving(async () => {
         toast({
-            title: 'Upload Started',
-            description: `Processing ${file.name}...`,
+            title: 'Saving Data',
+            description: 'Saving records to the database...',
         });
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
         try {
-            const binaryStr = event.target?.result;
-            if (!binaryStr) {
-            throw new Error("File content is empty");
-            }
-            const workbook = XLSX.read(binaryStr, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-                raw: false, // This will format dates
-                dateNF: 'yyyy-mm-dd'
-            });
-
-            const result = await uploadPerformanceData(jsonData);
-
+            const result = await uploadPerformanceData(parsedData);
             if (result.success) {
-            toast({
-                title: 'Upload Successful',
-                description: result.message,
-            });
-            setFile(null); // Clear file after successful upload
+                toast({
+                    title: 'Save Successful',
+                    description: result.message,
+                });
+                setFile(null); // Clear file and data after successful save
+                setParsedData([]);
             } else {
-            throw new Error(result.message);
+                throw new Error(result.message);
             }
         } catch (error) {
-            console.error("Error processing file:", error);
-            toast({
-            title: 'Upload Failed',
-            description: (error as Error).message || 'An unexpected error occurred.',
-            variant: 'destructive',
-            });
+            handleError(error, 'Save Failed');
         }
-        };
-        reader.readAsBinaryString(file);
     });
   };
+
+  const loading = isProcessing || isSaving;
+  const loadingText = isProcessing ? 'Processing...' : 'Saving...';
 
   return (
     <div className="grid gap-6 pt-6">
@@ -111,9 +162,9 @@ export function FileUploader() {
           isDragActive
             ? 'border-primary bg-primary/10'
             : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50'
-        }`}
+        } ${loading ? 'pointer-events-none opacity-50' : ''}`}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} disabled={loading}/>
         <UploadCloud className="w-12 h-12 text-muted-foreground" />
         {isDragActive ? (
           <p className="mt-4 text-lg font-semibold text-primary">
@@ -122,7 +173,7 @@ export function FileUploader() {
         ) : (
           <>
             <p className="mt-4 text-lg font-semibold text-foreground">
-              Drag & drop your file here, or click to select a file
+              {loading ? loadingText : 'Drag & drop your file here, or click to select'}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               (CSV, XLS, XLSX or PDF files)
@@ -130,14 +181,19 @@ export function FileUploader() {
           </>
         )}
       </div>
-      {file && (
+      {file && !isProcessing && (
         <div className="text-center text-sm text-muted-foreground">
           Selected file: <strong>{file.name}</strong>
         </div>
       )}
-      <Button onClick={handleUpload} disabled={!file || isProcessing} className="w-full md:w-auto mx-auto">
-        {isProcessing ? 'Processing...' : 'Parse and Save Records'}
-      </Button>
+      
+      <DataPreview data={parsedData} />
+
+      {parsedData.length > 0 && (
+          <Button onClick={handleSave} disabled={loading} className="w-full md:w-auto mx-auto">
+            {isSaving ? 'Saving Records...' : 'Save Records'}
+          </Button>
+      )}
     </div>
   );
 }
