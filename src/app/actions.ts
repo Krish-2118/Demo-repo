@@ -2,7 +2,6 @@
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
-
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
