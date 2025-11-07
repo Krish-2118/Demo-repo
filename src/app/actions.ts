@@ -27,26 +27,37 @@ export async function uploadPerformanceData(data: any[]) {
     const recordsCollection = firestore.collection('records');
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
-    const promises = data.map(row => {
+    const batch = firestore.batch();
+
+    data.forEach(row => {
         const districtName = row.district?.toString().trim().toLowerCase();
         const districtId = districtMap.get(districtName);
 
         if (!districtId) {
             console.warn(`District not found: ${row.district}`);
-            return Promise.resolve(); // Skip this row
+            return; // Skip this row
+        }
+        
+        // Firestore requires a proper Date object for date fields if you want to query on them later
+        // The input `row.date` might be a string or a Date object, new Date() handles both.
+        const recordDate = new Date(row.date);
+        if (isNaN(recordDate.getTime())) {
+            console.warn(`Invalid date for row:`, row);
+            return; // Skip if date is invalid
         }
 
         const record = {
             districtId: districtId,
             category: row.category,
             value: Number(row.value),
-            date: new Date(row.date).toISOString(),
+            date: recordDate.toISOString(),
         };
 
-        return recordsCollection.add(record);
+        const docRef = recordsCollection.doc(); // Auto-generate ID
+        batch.set(docRef, record);
     });
 
-    await Promise.all(promises);
+    await batch.commit();
 
     // Revalidate paths to show new data
     revalidatePath('/dashboard');
@@ -55,6 +66,7 @@ export async function uploadPerformanceData(data: any[]) {
     return { success: true, message: 'Data uploaded successfully.' };
   } catch (error) {
     console.error('Error uploading data:', error);
+    // Return a more specific error if possible, but for now, this is okay.
     return { success: false, message: 'Failed to upload data.' };
   }
 }
