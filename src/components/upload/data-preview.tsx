@@ -17,7 +17,7 @@ const previewData = [
 
 export function DataPreview() {
     return (
-        <Card className="rounded-xl shadow-lg">
+        <Card className="rounded-xl shadow-lg mt-6">
             <CardHeader>
                 <CardTitle>Data Preview</CardTitle>
                 <CardDescription>A preview of the first few rows from your uploaded file will appear here.</CardDescription>

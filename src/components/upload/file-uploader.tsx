@@ -17,7 +17,7 @@ export function FileUploader() {
       if (fileRejections.length > 0) {
         toast({
           title: 'File Upload Error',
-          description: 'Please upload only one CSV or Excel file at a time.',
+          description: 'Please upload only one file at a time.',
           variant: 'destructive',
         });
         return;
@@ -35,6 +35,7 @@ export function FileUploader() {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
         '.xlsx',
       ],
+      'application/pdf': ['.pdf'],
     },
     maxFiles: 1,
   });
@@ -47,6 +48,14 @@ export function FileUploader() {
         variant: 'destructive',
       });
       return;
+    }
+
+    if (file.type === 'application/pdf') {
+        toast({
+            title: 'PDF Upload',
+            description: 'PDF file selected. Processing for PDF files is coming soon!',
+        });
+        return;
     }
     
     setIsProcessing(true);
@@ -93,7 +102,7 @@ export function FileUploader() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 pt-6">
       <div
         {...getRootProps()}
         className={`flex flex-col items-center justify-center w-full p-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
@@ -114,7 +123,7 @@ export function FileUploader() {
               Drag & drop your file here, or click to select a file
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              (CSV, XLS, or XLSX files only)
+              (CSV, XLS, XLSX or PDF files)
             </p>
           </>
         )}

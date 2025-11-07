@@ -1,0 +1,218 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '../ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { districts, categoryLabels } from '@/lib/data';
+import type { Category } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { uploadPerformanceData } from '@/app/actions';
+import { useTransition } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const formSchema = z.object({
+  district: z.string().min(1, 'Please select a district.'),
+  category: z.string().min(1, 'Please select a category.'),
+  value: z.coerce.number().min(0, 'Value must be a positive number.'),
+  date: z.date({
+    required_error: 'A date is required.',
+  }),
+});
+
+export function ManualForm() {
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      district: '',
+      category: '',
+      value: 0,
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    startTransition(async () => {
+      try {
+        const singleRecord = [
+            {
+                district: districts.find(d => d.id.toString() === values.district)?.name,
+                category: values.category,
+                value: values.value,
+                date: values.date,
+            }
+        ]
+
+        const result = await uploadPerformanceData(singleRecord);
+
+        if (result.success) {
+          toast({
+            title: 'Record Saved',
+            description: 'The performance record has been saved successfully.',
+          });
+          form.reset();
+          // Reset date to undefined to clear the calendar
+          form.setValue('date', undefined as any, { shouldValidate: false });
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        toast({
+          title: 'Save Failed',
+          description:
+            (error as Error).message || 'An unexpected error occurred.',
+          variant: 'destructive',
+        });
+      }
+    });
+  }
+
+  return (
+    <Card className="rounded-xl shadow-lg mt-6">
+      <CardHeader>
+        <CardTitle>Manual Data Entry</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a district" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {districts.map(d => (
+                            <SelectItem key={d.id} value={d.id.toString()}>
+                                {d.name}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {(Object.keys(categoryLabels) as Category[]).map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                                {categoryLabels[cat]}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="value"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Value</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="Enter performance value" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col pt-2">
+                    <FormLabel>Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={'outline'}
+                            className={cn(
+                                'w-full pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, 'PPP')
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                            date > new Date() || date < new Date('1900-01-01')
+                            }
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            <Button type="submit" disabled={isPending}>
+                {isPending ? 'Saving...' : 'Save Record'}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
