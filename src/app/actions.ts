@@ -2,7 +2,7 @@
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
-import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
@@ -10,12 +10,12 @@ import { revalidatePath } from 'next/cache';
 // Helper to initialize Firebase Admin and return Firestore instance
 function getAdminFirestore(): Firestore {
   if (!getApps().length) {
-    initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-    });
+    // In a managed environment like App Hosting, initializeApp() discovers credentials automatically.
+    initializeApp();
   }
   return getFirestore();
 }
+
 
 export async function getAiSummary() {
   try {
