@@ -80,6 +80,8 @@ export async function uploadPerformanceData(data: any[]) {
         if (dateValue instanceof Date) {
             recordDate = dateValue;
         } else if (typeof dateValue === 'number') { // Excel serial date
+            // Excel stores dates as number of days since 1900-01-01.
+            // 25569 is the number of days between 1900-01-01 and 1970-01-01 (Unix epoch).
             recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
         } else if (typeof dateValue === 'string') { // String date
             recordDate = new Date(dateValue);
