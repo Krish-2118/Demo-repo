@@ -23,8 +23,7 @@ export async function getAiSummary() {
 }
 
 export async function uploadPerformanceData(data: any[]) {
-  await initializeFirebase();
-  const firestore = getFirestore();
+  const { firestore } = await initializeFirebase();
   const recordsCollection = firestore.collection('records');
   const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
