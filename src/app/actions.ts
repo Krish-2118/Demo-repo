@@ -23,11 +23,11 @@ export async function getAiSummary() {
 }
 
 export async function uploadPerformanceData(data: any[]) {
-  const { firestore } = await initializeFirebase();
-  const recordsCollection = firestore.collection('records');
-  const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
-
   try {
+    const { firestore } = await initializeFirebase();
+    const recordsCollection = firestore.collection('records');
+    const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
+
     const promises = data.map(row => {
         const districtName = row.district?.toString().trim().toLowerCase();
         const districtId = districtMap.get(districtName);
