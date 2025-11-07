@@ -3,7 +3,7 @@
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
 import { getApps, initializeApp, App } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getFirestore, Firestore, Timestamp } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
@@ -42,7 +42,7 @@ export async function uploadManualRecord(data: {districtId: number, category: st
       districtId: data.districtId,
       category: data.category,
       value: Number(data.value),
-      date: data.date.toISOString(),
+      date: Timestamp.fromDate(data.date),
     };
 
     await firestore.collection('records').add(record);
@@ -82,9 +82,12 @@ export async function uploadPerformanceData(data: any[]) {
         if (dateValue instanceof Date) {
             recordDate = dateValue;
         } else if (typeof dateValue === 'number') { 
+            // Excel serial date number
             recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
         } else if (typeof dateValue === 'string') {
-            recordDate = new Date(dateValue);
+            // Adjust for timezone to prevent off-by-one day errors
+            const [year, month, day] = dateValue.split('-').map(Number);
+            recordDate = new Date(Date.UTC(year, month - 1, day));
         } else {
             console.warn(`Invalid date format, skipping row:`, row);
             continue;
@@ -107,7 +110,7 @@ export async function uploadPerformanceData(data: any[]) {
             districtId: districtId,
             category: category,
             value: value,
-            date: recordDate.toISOString(),
+            date: Timestamp.fromDate(recordDate),
         };
 
         const docRef = recordsCollection.doc();
@@ -126,7 +129,7 @@ export async function uploadPerformanceData(data: any[]) {
 
     return { success: true, message: `${recordsAdded} records uploaded successfully.` };
   } catch (error) {
-    console.error('Error uploading data:', error);
+    console.error('FATAL Error uploading data:', error);
     return { success: false, message: 'Failed to upload data due to a server error.' };
   }
 }

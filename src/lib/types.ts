@@ -10,7 +10,7 @@ export type Record = {
   districtId: number;
   category: Category;
   value: number;
-  date: string; // ISO Date String
+  date: any; // Can be ISO String or Firestore Timestamp
 };
 
 export type PerformanceMetric = {

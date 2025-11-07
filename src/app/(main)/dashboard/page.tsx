@@ -8,7 +8,7 @@ import { Box, Target, Trophy, UserCheck } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
@@ -20,6 +20,19 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Narcotics': <Box className="h-4 w-4 text-muted-foreground" />,
   'Missing Person': <UserCheck className="h-4 w-4 text-muted-foreground" />,
 };
+
+// Helper to safely convert Firestore Timestamp or string to Date
+const toDate = (date: any): Date => {
+  if (date instanceof Timestamp) {
+    return date.toDate();
+  }
+  if (typeof date === 'string') {
+    return new Date(date);
+  }
+  // Fallback for other potential types or null/undefined
+  return new Date();
+};
+
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -34,11 +47,12 @@ export default function DashboardPage() {
   });
 
   const recordsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     let q = collection(firestore, 'records');
 
     if (filters.dateRange.from && filters.dateRange.to) {
-        const start = filters.dateRange.from.toISOString();
-        const end = filters.dateRange.to.toISOString();
+        const start = Timestamp.fromDate(filters.dateRange.from);
+        const end = Timestamp.fromDate(filters.dateRange.to);
         return query(q, where('date', '>=', start), where('date', '<=', end));
     }
     return collection(firestore, 'records');
@@ -56,9 +70,9 @@ export default function DashboardPage() {
   }, [filters.dateRange.from]);
 
   const prevRecordsQuery = useMemoFirebase(() => {
-    if (!previousMonthDateRange.from || !previousMonthDateRange.to) return null;
-    const start = previousMonthDateRange.from.toISOString();
-    const end = previousMonthDateRange.to.toISOString();
+    if (!firestore || !previousMonthDateRange.from || !previousMonthDateRange.to) return null;
+    const start = Timestamp.fromDate(previousMonthDateRange.from);
+    const end = Timestamp.fromDate(previousMonthDateRange.to);
     return query(collection(firestore, 'records'), where('date', '>=', start), where('date', '<=', end));
   }, [firestore, previousMonthDateRange]);
 
@@ -123,7 +137,8 @@ export default function DashboardPage() {
     const trendMap = new Map<string, any>();
 
     records.forEach(record => {
-      const month = format(new Date(record.date), 'MMM yyyy');
+      const recordDate = toDate(record.date);
+      const month = format(recordDate, 'MMM yyyy');
       if (!trendMap.has(month)) {
         trendMap.set(month, { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 });
       }
