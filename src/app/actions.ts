@@ -1,7 +1,8 @@
 'use server';
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
-import { initializeFirebase } from '@/firebase/server';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
@@ -23,7 +24,11 @@ export async function getAiSummary() {
 
 export async function uploadManualRecord(data: {districtId: number, category: string, value: number, date: Date}) {
   try {
-    const { firestore } = await initializeFirebase();
+    if (getApps().length === 0) {
+        initializeApp();
+    }
+    const firestore = getFirestore();
+
     const record = {
       districtId: data.districtId,
       category: data.category,
@@ -45,7 +50,10 @@ export async function uploadManualRecord(data: {districtId: number, category: st
 
 export async function uploadPerformanceData(data: any[]) {
   try {
-    const { firestore } = await initializeFirebase();
+    if (getApps().length === 0) {
+        initializeApp();
+    }
+    const firestore = getFirestore();
     const recordsCollection = firestore.collection('records');
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
 
