@@ -38,9 +38,17 @@ export async function uploadPerformanceData(data: any[]) {
             return; // Skip this row
         }
         
-        // Firestore requires a proper Date object for date fields if you want to query on them later
-        // The input `row.date` might be a string or a Date object, new Date() handles both.
-        const recordDate = new Date(row.date);
+        // The input `row.date` might be a string or a Date object.
+        // Excel dates can sometimes be parsed as numbers, so robust handling is needed.
+        let recordDate;
+        if (typeof row.date === 'number') { // Handle Excel serial date number
+          // XLSX library with `cellDates: true` is better, but this is a fallback.
+          // This formula converts Excel's serial date number to a JS Date.
+          recordDate = new Date(Math.round((row.date - 25569) * 86400 * 1000));
+        } else {
+          recordDate = new Date(row.date);
+        }
+
         if (isNaN(recordDate.getTime())) {
             console.warn(`Invalid date for row:`, row);
             return; // Skip if date is invalid
