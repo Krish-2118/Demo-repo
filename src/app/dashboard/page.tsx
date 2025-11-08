@@ -195,20 +195,17 @@ export default function DashboardPage() {
   return (
     <div className="flex-1 space-y-4">
         <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
-            </div>
-             <div className="lg:col-start-2">
-                {/* The NaturalLanguageQuery component was here */}
-            </div>
-        </div>
-
+        
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {kpiData.map((metric) => (
                 <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
             ))}
         </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
             <DistrictComparisonChart 
                 data={districtPerformance} 
