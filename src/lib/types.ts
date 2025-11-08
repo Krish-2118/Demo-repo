@@ -15,11 +15,9 @@ export type Category =
   | 'Sand Mining'
   | 'Preventive Actions'
   | 'Important Detections'
-  | 'Heinous Crime Cases'
   | 'Property Crime Cases'
   | 'Crime Against Women'
   | 'Cybercrime'
-  | 'Road Accidents'
   | 'Others';
 
 export type Record = {
@@ -50,7 +48,7 @@ const PerformanceRecordSchema = z.object({
   Category: z
     .string()
     .describe(
-      "The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Heinous Crime Cases', 'Property Crime Cases', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'."
+      "The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Property Crime Cases', 'Crime Against Women', 'Cybercrime', 'Others'."
     ),
   'Cases Registered': z.number().describe('The number of cases registered for that category on a given day.'),
   'Cases Solved': z.number().describe('The number of cases solved for that category on a given day.'),

@@ -42,10 +42,8 @@ export const categoryLabels: Record<Category, string> = {
   'Sand Mining': 'Illegal Sand Mining Cases',
   'Preventive Actions': 'Preventive Actions',
   'Important Detections': 'Important Detections',
-  'Heinous Crime Cases': 'Heinous Crime Cases',
   'Property Crime Cases': 'Property Crime Cases',
   'Crime Against Women': 'Crime Against Women',
   'Cybercrime': 'Cybercrime',
-  'Road Accidents': 'Road Accidents',
   'Others': 'Others',
 };
