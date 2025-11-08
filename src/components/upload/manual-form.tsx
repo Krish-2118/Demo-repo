@@ -33,9 +33,10 @@ import { format } from 'date-fns';
 import { districts, categoryLabels } from '@/lib/data';
 import type { Category } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { uploadManualRecord } from '@/app/actions';
 import { useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { useFirestore } from '@/firebase/client';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   district: z.string().min(1, 'Please select a district.'),
@@ -49,6 +50,7 @@ const formSchema = z.object({
 export function ManualForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,29 +61,31 @@ export function ManualForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore) {
+        toast({ title: 'Error', description: 'Firestore not initialized.', variant: 'destructive' });
+        return;
+    }
+
     startTransition(async () => {
       try {
         const record = {
             districtId: parseInt(values.district),
             category: values.category,
             value: values.value,
-            date: values.date,
-        }
+            date: Timestamp.fromDate(values.date),
+        };
 
-        const result = await uploadManualRecord(record);
+        await addDoc(collection(firestore, 'records'), record);
 
-        if (result.success) {
-          toast({
+        toast({
             title: 'Record Saved',
             description: 'The performance record has been saved successfully.',
-          });
-          form.reset();
-          // Reset date to undefined to clear the calendar
-          form.setValue('date', undefined as any, { shouldValidate: false });
-        } else {
-          throw new Error(result.message);
-        }
+        });
+        form.reset();
+        // Reset date to undefined to clear the calendar
+        form.setValue('date', undefined as any, { shouldValidate: false });
+        
       } catch (error) {
         toast({
           title: 'Save Failed',
@@ -108,7 +112,7 @@ export function ManualForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>District</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a district" />
@@ -132,7 +136,7 @@ export function ManualForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a category" />

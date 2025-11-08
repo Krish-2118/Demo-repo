@@ -2,7 +2,7 @@
 import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAiSummary } from '@/app/actions';
+import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { Lightbulb, RefreshCw } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -13,8 +13,19 @@ export function AiSummary() {
 
   const handleGenerateSummary = () => {
     startTransition(async () => {
-      const result = await getAiSummary();
-      setSummary(result);
+      try {
+        const result = await generateDistrictPerformanceSummary({
+          districtName: 'Ganjam',
+          category: 'Narcotics',
+          value: 18,
+          date: 'May 2023',
+          improvementPercentage: 42,
+        });
+        setSummary(result.summary);
+      } catch (error) {
+        console.error('Error generating AI summary:', error);
+        setSummary('Could not generate summary at this time.');
+      }
     });
   };
 

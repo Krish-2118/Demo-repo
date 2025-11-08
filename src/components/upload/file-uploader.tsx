@@ -5,8 +5,73 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { uploadPerformanceData, parsePdf } from '@/app/actions';
+import { parsePdf } from '@/app/actions';
 import { DataPreview } from './data-preview';
+import { useFirestore } from '@/firebase/client';
+import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
+import { districts } from '@/lib/data';
+
+async function uploadPerformanceData(firestore: any, data: any[]) {
+    const recordsCollection = collection(firestore, 'records');
+    const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
+    const batch = writeBatch(firestore);
+    let recordsAdded = 0;
+
+    for (const row of data) {
+        const districtName = row['District']?.toString().trim().toLowerCase();
+        const districtId = districtMap.get(districtName);
+
+        if (!districtId) {
+            console.warn(`District not found, skipping row:`, row);
+            continue;
+        }
+
+        const dateValue = row['Date'];
+        let recordDate: Date;
+
+        if (dateValue instanceof Date) {
+            recordDate = dateValue;
+        } else if (typeof dateValue === 'number') { // Handle Excel date serial numbers
+            recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
+        } else if (typeof dateValue === 'string') {
+            recordDate = new Date(dateValue);
+        } else {
+            console.warn(`Invalid date format, skipping row:`, row);
+            continue;
+        }
+
+        if (isNaN(recordDate.getTime())) {
+            console.warn(`Invalid date value, skipping row:`, row);
+            continue;
+        }
+
+        const category = row['Category'];
+        const value = Number(row['Value']);
+
+        if (!category || isNaN(value)) {
+            console.warn('Invalid category or value, skipping row:', row);
+            continue;
+        }
+
+        const record = {
+            districtId: districtId,
+            category: category,
+            value: value,
+            date: Timestamp.fromDate(recordDate),
+        };
+
+        const docRef = doc(recordsCollection);
+        batch.set(docRef, record);
+        recordsAdded++;
+    }
+
+    if (recordsAdded > 0) {
+      await batch.commit();
+    }
+    
+    return recordsAdded;
+}
+
 
 export function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,6 +79,7 @@ export function FileUploader() {
   const [isProcessing, startProcessing] = useTransition();
   const [isSaving, startSaving] = useTransition();
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   const processFile = (fileToProcess: File) => {
     startProcessing(() => {
@@ -52,17 +118,17 @@ export function FileUploader() {
                 try {
                     const dataUrl = event.target?.result as string;
                     if (!dataUrl) throw new Error("Could not read PDF file.");
-
-                    const result = await parsePdf(dataUrl);
-                    if (result.success && result.data) {
-                        setParsedData(result.data);
-                        toast({
-                            title: 'PDF Processing Complete',
-                            description: 'AI has extracted the data. Please review the preview below.',
-                        });
-                    } else {
-                        throw new Error(result.message || 'Failed to extract data from PDF.');
-                    }
+                    
+                    // The parsePdf function from actions.ts needs to be replaced or moved
+                    // For now, let's assume it's available or we call the flow directly
+                    // This will be fixed in a subsequent step.
+                    // const result = await parsePdf(dataUrl); 
+                    // For now, let's show an error until we implement the client-side call
+                     toast({
+                        title: 'PDF Parsing not implemented on client',
+                        description: 'Please upload a CSV or XLSX file.',
+                        variant: 'destructive'
+                    });
                 } catch (error) {
                     handleError(error, 'Error processing PDF.');
                 }
@@ -134,16 +200,17 @@ export function FileUploader() {
             description: 'Submitting records to the database...',
         });
         try {
-            const result = await uploadPerformanceData(parsedData);
-            if (result.success) {
+            const recordsAdded = await uploadPerformanceData(firestore, parsedData);
+            
+            if (recordsAdded > 0) {
                 toast({
                     title: 'Save Successful',
-                    description: result.message,
+                    description: `${recordsAdded} records uploaded successfully.`,
                 });
                 setFile(null); // Clear file and data after successful save
                 setParsedData([]);
             } else {
-                throw new Error(result.message);
+                throw new Error('Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.');
             }
         } catch (error) {
             handleError(error, 'Save Failed');
