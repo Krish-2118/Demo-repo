@@ -20,13 +20,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden h-full flex-col border-r bg-background md:flex transition-all duration-300',
+        'relative hidden h-full flex-col border-r bg-background md:flex transition-all duration-300',
         isCollapsed ? 'w-20' : 'w-60'
       )}
     >
       <div
         className={cn(
-          'flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'
+          'flex h-[60px] items-center border-b px-6',
+          isCollapsed ? 'justify-center' : 'justify-between'
         )}
       >
         <Link
@@ -44,7 +45,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className={cn('ml-auto', isCollapsed && 'mx-auto')}
+                        className='ml-auto'
                         onClick={onToggle}
                     >
                         {isCollapsed ? (
@@ -76,3 +77,5 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     </aside>
   );
 }
+
+    

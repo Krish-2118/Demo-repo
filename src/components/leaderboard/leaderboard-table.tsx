@@ -76,6 +76,7 @@ export function LeaderboardTable() {
         });
 
         records.forEach(record => {
+            if(!record.districtId) return;
             const districtData = districtScores.get(record.districtId);
             if (districtData) {
                 districtData.score += record.value;
@@ -85,9 +86,12 @@ export function LeaderboardTable() {
                 }
             }
         });
+        
+        const sortedData = Array.from(districtScores.values())
+            .sort((a, b) => b.score - a.score);
 
-        return Array.from(districtScores.values())
-            .sort((a, b) => b.score - a.score)
+        return sortedData.map(d => ({...d, name: t(districts.find(dist => dist.id === d.id)?.name || '')}));
+
     }, [records, t, translatedCategories]);
 
     const handleGetSuggestions = (districtData: ScoreData) => {
@@ -188,12 +192,12 @@ export function LeaderboardTable() {
                                                 size="sm" 
                                                 onClick={() => handleGetSuggestions(item)} 
                                                 disabled={isGenerating && selectedDistrict?.id === item.id}
-                                                className="w-[180px]"
+                                                className="w-[200px]"
                                             >
                                                 {isGenerating && selectedDistrict?.id === item.id ? 
                                                     <>
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        {t('Generating suggestions...')}
+                                                        {t('Generating...')}
                                                     </>
                                                     :
                                                     <>
@@ -223,7 +227,7 @@ export function LeaderboardTable() {
                     {isGenerating ? (
                         <div className="flex items-center justify-center space-x-2">
                             <Loader2 className="h-6 w-6 animate-spin" />
-                            <span>{t('Generating suggestions...')}</span>
+                            <span>{t('Generating...')}</span>
                         </div>
                     ) : (
                         <ul className="space-y-4 list-disc pl-5">
@@ -238,3 +242,5 @@ export function LeaderboardTable() {
         </>
     );
 }
+
+    

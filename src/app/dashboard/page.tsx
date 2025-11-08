@@ -69,15 +69,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (processedRecords.length > 0 && !isDateRangeSet) {
-      const dates = processedRecords.map(r => r.date.getTime());
-      const minDate = new Date(Math.min(...dates));
-      const maxDate = new Date(Math.max(...dates));
-      
-      setFilters(prevFilters => ({
-        ...prevFilters,
-        dateRange: { from: minDate, to: maxDate }
-      }));
-      setIsDateRangeSet(true);
+      const dates = processedRecords.map(r => r.date.getTime()).filter(t => !isNaN(t));
+      if(dates.length > 0) {
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        
+        setFilters(prevFilters => ({
+          ...prevFilters,
+          dateRange: { from: minDate, to: maxDate }
+        }));
+        setIsDateRangeSet(true);
+      }
     }
   }, [processedRecords, isDateRangeSet]);
 
@@ -91,16 +93,18 @@ export default function DashboardPage() {
   }, [filters.dateRange.from]);
 
   const filteredRecords = useMemo(() => {
+    if (!processedRecords) return [];
     const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+    
     return processedRecords.filter(r => 
       (filters.district === 'all' || r.districtId === selectedDistrictId) &&
       (filters.category === 'all' || r.category === filters.category) &&
       (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
-  }, [processedRecords, filters]);
+  }, [processedRecords, filters.district, filters.category, filters.dateRange]);
 
   const prevMonthRecords = useMemo(() => {
-     if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
+     if (!previousMonthDateRange.from || !previousMonthDateRange.to || !processedRecords) return [];
      const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
      return processedRecords.filter(r => 
        (filters.district === 'all' || r.districtId === selectedDistrictId) &&
@@ -140,7 +144,7 @@ export default function DashboardPage() {
         'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
     };
 
-    districts.forEach(d => performanceMap.set(t(d.name), { 
+    districts.forEach(d => performanceMap.set(d.name, { 
         name: t(d.name), 
         ...Object.fromEntries(Object.keys(initialData).map(k => [t(categoryLabels[k as Category]), 0]))
     }));
@@ -148,7 +152,7 @@ export default function DashboardPage() {
     filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
         if (district) {
-            const current = performanceMap.get(t(district.name));
+            const current = performanceMap.get(district.name);
             const categoryKey = t(categoryLabels[r.category]);
             if (current && categoryKey in current) {
                 current[categoryKey] = (current[categoryKey] || 0) + r.value;
@@ -161,9 +165,9 @@ export default function DashboardPage() {
 
   const trendData = useMemo(() => {
     const trendMap = new Map<string, any>();
+    const langForFormatter = t('en-US'); // Use a key that can be translated
     
-    // Initialize months
-    const monthFormatter = new Intl.DateTimeFormat(t('en-US'), { month: 'short', year: 'numeric' });
+    const monthFormatter = new Intl.DateTimeFormat(langForFormatter, { month: 'short', year: 'numeric' });
 
     for (let i = 0; i < 6; i++) {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
@@ -176,16 +180,16 @@ export default function DashboardPage() {
         trendMap.set(month, initialData);
     }
 
-    // Filter records for the last 6 months
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
     const relevantRecords = processedRecords.filter(r => r.date instanceof Date && r.date >= sixMonthsAgo);
 
-    // Aggregate data
+    const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+
     relevantRecords.forEach(record => {
       const month = monthFormatter.format(startOfMonth(record.date));
       const monthData = trendMap.get(month);
       const categoryKey = t(categoryLabels[record.category]);
-      if (monthData && (filters.district === 'all' || record.districtId === districts.find(d => d.name.toLowerCase() === filters.district)?.id)) {
+      if (monthData && (filters.district === 'all' || record.districtId === selectedDistrictId)) {
         if(categoryKey in monthData){
             monthData[categoryKey] += record.value;
         }
@@ -227,3 +231,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

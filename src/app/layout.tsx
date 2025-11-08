@@ -10,7 +10,7 @@ import { TranslationProvider } from '@/context/translation-context';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const inter = Inter({ subsets: ['latin']});
 
 export default function RootLayout({
   children,
@@ -30,12 +30,13 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-sans antialiased h-full`}>
+      <body className={`${inter.className} antialiased h-full`}>
         <FirebaseClientProvider>
           <TranslationProvider>
             <div
               className={cn(
-                'grid min-h-screen w-full md:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr]'
+                'grid min-h-screen w-full',
+                isSidebarCollapsed ? 'md:grid-cols-[80px_1fr]' : 'md:grid-cols-[240px_1fr]'
               )}
             >
               {isClient && (
@@ -58,3 +59,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
