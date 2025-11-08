@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Calendar as CalendarIcon, Download, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, endOfDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 
@@ -99,26 +99,31 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             return;
         }
 
-        if (category === 'all' && (!date?.from || !date?.to)) {
+        if (category === 'all' && !date?.from) {
             toast({ title: 'Filter required', description: 'Please select a specific category or a date range to clean data.', variant: 'destructive' });
             return;
         }
 
         try {
             const recordsRef = collection(firestore, 'records');
-            let queries = [];
+            const queryConstraints = [];
 
             if (category !== 'all') {
-                queries.push(where('category', '==', category));
+                queryConstraints.push(where('category', '==', category));
             }
             if (date?.from) {
-                queries.push(where('date', '>=', Timestamp.fromDate(date.from)));
-            }
-            if (date?.to) {
-                queries.push(where('date', '<=', Timestamp.fromDate(date.to)));
+                queryConstraints.push(where('date', '>=', Timestamp.fromDate(date.from)));
+                // If only `from` is set, treat it as a single-day filter.
+                const endDate = date.to ? date.to : endOfDay(date.from);
+                queryConstraints.push(where('date', '<=', Timestamp.fromDate(endDate)));
             }
 
-            const q = query(recordsRef, ...queries);
+            if (queryConstraints.length === 0) {
+              toast({ title: 'Filter required', description: 'Please select a category or date range to clean data.', variant: 'destructive' });
+              return;
+            }
+
+            const q = query(recordsRef, ...queryConstraints);
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -145,9 +150,19 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   
   const getCleanConfirmationDescription = () => {
     const catDescription = category === 'all' ? 'all records' : `all records in the "${categoryLabels[category]}" category`;
-    const dateDescription = (date?.from && date.to) ? `between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}` : "across all dates";
+    
+    let dateDescription = "across all dates";
+    if (date?.from && date.to) {
+        dateDescription = `between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}`;
+    } else if (date?.from) {
+        dateDescription = `on ${format(date.from, 'LLL dd, y')}`;
+    }
 
-    return `This will permanently delete ${catDescription} ${category === 'all' ? '' : ' '} ${dateDescription}. This action cannot be undone.`;
+    if (category === 'all' && !date?.from) {
+        return "You must select a category or date range to clean data.";
+    }
+
+    return `This will permanently delete ${catDescription} ${dateDescription}. This action cannot be undone.`;
   }
 
   return (
