@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Calendar as CalendarIcon, Download, Trash2, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, endOfDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -44,7 +44,7 @@ import type { Category, Record } from '@/lib/types';
 import { useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase/client';
-import { collection, query, where, getDocs, writeBatch, Timestamp, endOfDay } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 
 
 type FiltersProps = {
