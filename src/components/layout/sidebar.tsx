@@ -20,7 +20,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'relative hidden h-full flex-col border-r bg-background sm:flex transition-all duration-300',
+        'hidden h-full flex-col border-r bg-background md:flex transition-all duration-300',
         isCollapsed ? 'w-20' : 'w-60'
       )}
     >

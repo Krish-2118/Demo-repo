@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { FirebaseClientProvider } from '@/firebase/client';
 import { TranslationProvider } from '@/context/translation-context';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -28,18 +29,14 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <TranslationProvider>
             <div
-              className={`grid min-h-screen w-full transition-all duration-300 md:grid-cols-[${
-                isSidebarCollapsed ? '80px' : '240px'
-              }_1fr] lg:grid-cols-[${
-                isSidebarCollapsed ? '80px' : '280px'
-              }_1fr]`}
+              className={cn(
+                'grid min-h-screen w-full md:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr]'
+              )}
             >
-              <div className="hidden border-r bg-muted/40 md:block">
-                <Sidebar
-                  isCollapsed={isSidebarCollapsed}
-                  onToggle={toggleSidebar}
-                />
-              </div>
+              <Sidebar
+                isCollapsed={isSidebarCollapsed}
+                onToggle={toggleSidebar}
+              />
               <div className="flex flex-col">
                 <Header />
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
