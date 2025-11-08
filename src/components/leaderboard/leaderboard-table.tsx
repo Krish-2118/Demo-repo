@@ -1,3 +1,4 @@
+
 'use client';
 import { useMemo, useState, useTransition } from 'react';
 import {
@@ -57,9 +58,9 @@ export function LeaderboardTable() {
     const leaderboardData: ScoreData[] = useMemo(() => {
         if (!records) return [];
 
+        // Use District ID as the key to prevent issues with translation
         const districtScores = new Map<number, { id: number; name: string; totalCasesRegistered: number; totalCasesSolved: number; performance: any }>();
         
-        // Initialize map for all districts with 0 values
         districts.forEach(district => {
             districtScores.set(district.id, {
                 id: district.id,
@@ -70,18 +71,17 @@ export function LeaderboardTable() {
             });
         });
         
-        // Aggregate data from records
         records.forEach(record => {
             const districtData = districtScores.get(record.districtId);
             if (districtData) {
-                districtData.totalCasesRegistered += record.casesRegistered;
-                districtData.totalCasesSolved += record.casesSolved;
+                districtData.totalCasesRegistered += record.casesRegistered || 0;
+                districtData.totalCasesSolved += record.casesSolved || 0;
                 
                 if (!districtData.performance[record.category]) {
                     districtData.performance[record.category] = { registered: 0, solved: 0 };
                 }
-                districtData.performance[record.category].registered += record.casesRegistered;
-                districtData.performance[record.category].solved += record.casesSolved;
+                districtData.performance[record.category].registered += record.casesRegistered || 0;
+                districtData.performance[record.category].solved += record.casesSolved || 0;
             }
         });
         

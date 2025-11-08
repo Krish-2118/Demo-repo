@@ -166,29 +166,25 @@ export default function DashboardPage() {
 
 
   const districtPerformance = useMemo(() => {
-    const performanceMap = new Map<string, any>();
-    
+    // Use District ID as the key to prevent issues with translation
+    const performanceMap = new Map<number, { name: string; 'Cases Registered': number; 'Cases Solved': number }>();
+
     districts.forEach(d => {
-        const initialData: Record<string, number> = {
-          'Cases Registered': 0,
-          'Cases Solved': 0
-        };
-        performanceMap.set(d.name, { 
-            name: t(d.name), 
-            ...initialData
-        })
+        performanceMap.set(d.id, {
+            name: t(d.name),
+            'Cases Registered': 0,
+            'Cases Solved': 0
+        });
     });
 
     filteredRecords.forEach(r => {
-        const district = districts.find(d => d.id === r.districtId);
+        const district = performanceMap.get(r.districtId);
         if (district) {
-            const current = performanceMap.get(district.name);
-            if (current) {
-                current['Cases Registered'] += r.casesRegistered;
-                current['Cases Solved'] += r.casesSolved;
-            }
+            district['Cases Registered'] += r.casesRegistered;
+            district['Cases Solved'] += r.casesSolved;
         }
     });
+    
     return Array.from(performanceMap.values());
   }, [filteredRecords, t]);
 
