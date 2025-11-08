@@ -148,6 +148,9 @@ export const translations = {
     'Please process some text before saving.': 'ଦୟାକରି ସେଭ୍ କରିବା ପୂର୍ବରୁ କିଛି ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ |',
     'Upload failed. No valid records were found in the text. Please check the content.': 'ଅପଲੋડ୍ ବିఫଳ ହେଲା। ପାଠ୍ୟରେ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ବିଷୟବସ୍ତୁ ଯାଞ୍ଚ କରନ୍ତୁ।',
 
+    'Audio Generation Failed': 'ଅଡିଓ ଜେନେରେସନ୍ ବିଫଳ ହେଲା',
+    'Could not generate audio for the summary.': 'ସାରାଂଶ ପାଇଁ ଅଡିଓ ଜେନେରେଟ୍ କରାଯାଇପାରିଲା ନାହିଁ |',
+
     'Angul': 'ଅନୁଗୁଳ',
     'Balangir': 'ବଲାଙ୍ଗୀର',
     'Balasore': 'ବାଲେଶ୍ୱର',
