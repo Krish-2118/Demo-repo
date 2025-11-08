@@ -27,7 +27,7 @@ export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonC
     <Card className="rounded-xl shadow-lg">
       <CardHeader>
         <CardTitle>District-wise Comparison</CardTitle>
-        <CardDescription>Performance across all categories</CardDescription>
+        <CardDescription>Performance across key categories</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>

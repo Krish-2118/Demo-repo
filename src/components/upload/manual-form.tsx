@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -58,6 +57,7 @@ export function ManualForm() {
       district: '',
       category: '',
       value: 0,
+      date: new Date(),
     },
   });
 
@@ -83,8 +83,7 @@ export function ManualForm() {
             description: 'The performance record has been saved successfully.',
         });
         form.reset();
-        // Reset date to undefined to clear the calendar
-        form.setValue('date', undefined as any, { shouldValidate: false });
+        form.setValue('date', new Date()); // Reset date to today
         
       } catch (error) {
         toast({
