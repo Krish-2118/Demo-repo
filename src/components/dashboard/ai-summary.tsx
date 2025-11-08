@@ -18,7 +18,7 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleGenerateSummary = useCallback(() => {
-    if (!kpiData || kpiData.some(d => d.value === 0)) {
+    if (!kpiData || kpiData.every(d => d.value === 0)) {
         setSummary('Not enough data to generate an insight. Please select a different date range or district.');
         return;
     }
