@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,7 +26,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '../ui/calendar';
+import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { districts, categoryLabels } from '@/lib/data';
@@ -37,33 +36,41 @@ import { useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useFirestore } from '@/firebase/client';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { useTranslation } from '@/context/translation-context';
 
 const formSchema = z.object({
   district: z.string().min(1, 'Please select a district.'),
   category: z.string().min(1, 'Please select a category.'),
-  value: z.coerce.number().min(0, 'Value must be a positive number.'),
+  casesRegistered: z.coerce.number().min(0, 'Value must be a positive number.'),
+  casesSolved: z.coerce.number().min(0, 'Value must be a positive number.'),
   date: z.date({
     required_error: 'A date is required.',
   }),
+}).refine(data => data.casesSolved <= data.casesRegistered, {
+    message: "Cases solved cannot be greater than cases registered.",
+    path: ["casesSolved"],
 });
 
 export function ManualForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       district: '',
       category: '',
-      value: 0,
+      casesRegistered: 0,
+      casesSolved: 0,
+      date: new Date(),
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) {
-        toast({ title: 'Error', description: 'Firestore not initialized.', variant: 'destructive' });
+        toast({ title: t('Error'), description: t('Firestore not initialized.'), variant: 'destructive' });
         return;
     }
 
@@ -72,25 +79,25 @@ export function ManualForm() {
         const record = {
             districtId: parseInt(values.district),
             category: values.category,
-            value: values.value,
+            casesRegistered: values.casesRegistered,
+            casesSolved: values.casesSolved,
             date: Timestamp.fromDate(values.date),
         };
 
         await addDoc(collection(firestore, 'records'), record);
 
         toast({
-            title: 'Record Saved',
-            description: 'The performance record has been saved successfully.',
+            title: t('Record Saved'),
+            description: t('The performance record has been saved successfully.'),
         });
         form.reset();
-        // Reset date to undefined to clear the calendar
-        form.setValue('date', undefined as any, { shouldValidate: false });
+        form.setValue('date', new Date()); // Reset date to today
         
       } catch (error) {
         toast({
-          title: 'Save Failed',
+          title: t('Save Failed'),
           description:
-            (error as Error).message || 'An unexpected error occurred.',
+            (error as Error).message || t('An unexpected error occurred.'),
           variant: 'destructive',
         });
       }
@@ -100,7 +107,7 @@ export function ManualForm() {
   return (
     <Card className="rounded-xl shadow-lg mt-6">
       <CardHeader>
-        <CardTitle>Manual Data Entry</CardTitle>
+        <CardTitle>{t('Manual Data Entry')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -111,17 +118,17 @@ export function ManualForm() {
                 name="district"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>District</FormLabel>
+                    <FormLabel>{t('District')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a district" />
+                            <SelectValue placeholder={t('Select a district')} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                         {districts.map(d => (
                             <SelectItem key={d.id} value={d.id.toString()}>
-                                {d.name}
+                                {t(d.name)}
                             </SelectItem>
                         ))}
                         </SelectContent>
@@ -135,17 +142,17 @@ export function ManualForm() {
                 name="category"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('Category')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
+                            <SelectValue placeholder={t('Select a category')} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                         {(Object.keys(categoryLabels) as Category[]).map((cat) => (
                             <SelectItem key={cat} value={cat}>
-                                {categoryLabels[cat]}
+                                {t(categoryLabels[cat])}
                             </SelectItem>
                         ))}
                         </SelectContent>
@@ -156,12 +163,12 @@ export function ManualForm() {
                 />
                 <FormField
                 control={form.control}
-                name="value"
+                name="casesRegistered"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Value</FormLabel>
+                    <FormLabel>{t('Cases Registered')}</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="Enter performance value" {...field} />
+                        <Input type="number" placeholder={t("Enter number of cases registered")} {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -169,10 +176,23 @@ export function ManualForm() {
                 />
                 <FormField
                 control={form.control}
+                name="casesSolved"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t('Cases Solved')}</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder={t("Enter number of cases solved")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
                 name="date"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2">
-                    <FormLabel>Date</FormLabel>
+                    <FormItem className="flex flex-col pt-2 md:pt-0">
+                    <FormLabel>{t('Date')}</FormLabel>
                     <Popover>
                         <PopoverTrigger asChild>
                         <FormControl>
@@ -186,7 +206,7 @@ export function ManualForm() {
                             {field.value ? (
                                 format(field.value, 'PPP')
                             ) : (
-                                <span>Pick a date</span>
+                                <span>{t('Pick a date')}</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -210,7 +230,7 @@ export function ManualForm() {
                 />
             </div>
             <Button type="submit" disabled={isPending}>
-                {isPending ? 'Saving...' : 'Save Record'}
+                {isPending ? t('Saving...') : t('Save Record')}
             </Button>
           </form>
         </Form>

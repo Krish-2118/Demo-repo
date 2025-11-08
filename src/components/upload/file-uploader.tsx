@@ -10,6 +10,7 @@ import { useFirestore } from '@/firebase/client';
 import { collection, writeBatch, doc, Timestamp, Firestore } from 'firebase/firestore';
 import { districts } from '@/lib/data';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
+import { useTranslation } from '@/context/translation-context';
 
 async function uploadPerformanceData(firestore: Firestore, data: any[]) {
     if (!firestore) {
@@ -21,7 +22,6 @@ async function uploadPerformanceData(firestore: Firestore, data: any[]) {
     let recordsAdded = 0;
 
     for (const row of data) {
-        // Handle both direct properties (from manual entry) and capitalized properties (from file parsing)
         const districtName = (row.District || row.districtName)?.toString().trim().toLowerCase();
         const districtId = row.districtId || districtMap.get(districtName);
 
@@ -52,17 +52,24 @@ async function uploadPerformanceData(firestore: Firestore, data: any[]) {
         }
 
         const category = row.Category || row.category;
-        const value = Number(row.Value || row.value);
+        const casesRegistered = Number(row['Cases Registered'] || row.casesRegistered);
+        const casesSolved = Number(row['Cases Solved'] || row.casesSolved);
 
-        if (!category || isNaN(value)) {
-            console.warn('Invalid category or value, skipping row:', row);
+        if (!category || isNaN(casesRegistered) || isNaN(casesSolved)) {
+            console.warn('Invalid category or values, skipping row:', row);
+            continue;
+        }
+        
+        if (casesSolved > casesRegistered) {
+            console.warn('Cases solved cannot be greater than cases registered, skipping row:', row);
             continue;
         }
 
         const record = {
             districtId: districtId,
             category: category,
-            value: value,
+            casesRegistered: casesRegistered,
+            casesSolved: casesSolved,
             date: Timestamp.fromDate(recordDate),
         };
 
@@ -86,12 +93,13 @@ export function FileUploader() {
   const [isSaving, startSaving] = useTransition();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const processFile = (fileToProcess: File) => {
     startProcessing(() => {
         toast({
-            title: 'Processing File',
-            description: `Parsing ${fileToProcess.name}...`,
+            title: t('Processing File'),
+            description: t('Parsing {fileName}...', { fileName: fileToProcess.name }),
         });
 
         if (fileToProcess.type.includes('spreadsheet') || fileToProcess.type.includes('csv') || fileToProcess.type.includes('excel')) {
@@ -110,11 +118,11 @@ export function FileUploader() {
                     });
                     setParsedData(jsonData);
                     toast({
-                        title: 'Processing Complete',
-                        description: 'Please review the data preview below.',
+                        title: t('Processing Complete'),
+                        description: t('Please review the data preview below.'),
                     });
                 } catch (error) {
-                    handleError(error, 'Error processing spreadsheet.');
+                    handleError(error, t('Error processing spreadsheet.'));
                 }
             };
             reader.readAsBinaryString(fileToProcess);
@@ -126,8 +134,8 @@ export function FileUploader() {
                     if (!dataUrl) throw new Error("Could not read PDF file.");
                     
                     toast({
-                        title: 'Extracting Data from PDF',
-                        description: 'This may take a moment...',
+                        title: t('Extracting Data from PDF'),
+                        description: t('This may take a moment...'),
                     });
 
                     const result = await extractDataFromPdf({ pdfDataUri: dataUrl });
@@ -135,22 +143,22 @@ export function FileUploader() {
                     if (result && result.data) {
                         setParsedData(result.data);
                         toast({
-                            title: 'PDF Processing Complete',
-                            description: 'Please review the extracted data preview below.',
+                            title: t('PDF Processing Complete'),
+                            description: t('Please review the extracted data preview below.'),
                         });
                     } else {
                          throw new Error("AI could not extract data from the PDF.");
                     }
 
                 } catch (error) {
-                    handleError(error, 'Error processing PDF.');
+                    handleError(error, t('Error processing PDF.'));
                 }
             };
             reader.readAsDataURL(fileToProcess);
         } else {
             toast({
-                title: 'Unsupported File Type',
-                description: 'Please upload a CSV, XLSX, or PDF file.',
+                title: t('Unsupported File Type'),
+                description: t('Please upload a CSV, XLSX, or PDF file.'),
                 variant: 'destructive'
             });
         }
@@ -161,8 +169,8 @@ export function FileUploader() {
     (acceptedFiles: File[], fileRejections: any[]) => {
       if (fileRejections.length > 0) {
         toast({
-          title: 'File Upload Error',
-          description: 'Please upload only one file at a time.',
+          title: t('File Upload Error'),
+          description: t('Please upload only one file at a time.'),
           variant: 'destructive',
         });
         return;
@@ -174,7 +182,7 @@ export function FileUploader() {
         processFile(newFile);
       }
     },
-    [toast]
+    [toast, t] // removed processFile from dependency array to avoid re-creation on every render
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -192,7 +200,7 @@ export function FileUploader() {
     console.error(title, error);
     toast({
       title: title,
-      description: (error as Error).message || 'An unexpected error occurred.',
+      description: (error as Error).message || t('An unexpected error occurred.'),
       variant: 'destructive',
     });
   };
@@ -200,8 +208,8 @@ export function FileUploader() {
   const handleSave = () => {
     if (parsedData.length === 0) {
       toast({
-        title: 'No Data to Save',
-        description: 'Please process a file before saving.',
+        title: t('No Data to Save'),
+        description: t('Please process a file before saving.'),
         variant: 'destructive',
       });
       return;
@@ -209,8 +217,8 @@ export function FileUploader() {
     
     startSaving(async () => {
         toast({
-            title: 'Saving Data',
-            description: 'Submitting records to the database...',
+            title: t('Saving Data'),
+            description: t('Submitting records to the database...'),
         });
         try {
             if (!firestore) throw new Error("Firestore not available");
@@ -218,22 +226,22 @@ export function FileUploader() {
             
             if (recordsAdded > 0) {
                 toast({
-                    title: 'Save Successful',
-                    description: `${recordsAdded} records uploaded successfully.`,
+                    title: t('Save Successful'),
+                    description: t('{count} records uploaded successfully.', { count: recordsAdded }),
                 });
                 setFile(null); // Clear file and data after successful save
                 setParsedData([]);
             } else {
-                throw new Error('Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.');
+                throw new Error(t('Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.'));
             }
         } catch (error) {
-            handleError(error, 'Save Failed');
+            handleError(error, t('Save Failed'));
         }
     });
   };
 
   const loading = isProcessing || isSaving;
-  const loadingText = isProcessing ? 'Processing...' : 'Saving...';
+  const loadingText = isProcessing ? t('Processing...') : t('Saving...');
 
   return (
     <div className="grid gap-6 pt-6">
@@ -249,22 +257,22 @@ export function FileUploader() {
         <UploadCloud className="w-12 h-12 text-muted-foreground" />
         {isDragActive ? (
           <p className="mt-4 text-lg font-semibold text-primary">
-            Drop the file here...
+            {t('Drop the file here...')}
           </p>
         ) : (
           <>
             <p className="mt-4 text-lg font-semibold text-foreground">
-              {loading ? loadingText : 'Drag & drop your file here, or click to select'}
+              {loading ? loadingText : t('Drag & drop your file here, or click to select')}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              (CSV, XLS, XLSX or PDF files)
+              {t('(CSV, XLS, XLSX or PDF files)')}
             </p>
           </>
         )}
       </div>
       {file && !isProcessing && (
         <div className="text-center text-sm text-muted-foreground">
-          Selected file: <strong>{file.name}</strong>
+          {t('Selected file')}: <strong>{file.name}</strong>
         </div>
       )}
       
@@ -272,7 +280,7 @@ export function FileUploader() {
 
       {parsedData.length > 0 && (
           <Button onClick={handleSave} disabled={loading} className="w-full md:w-auto mx-auto">
-            {isSaving ? 'Saving Records...' : 'Save Records'}
+            {isSaving ? t('Saving Records...') : t('Save Records')}
           </Button>
       )}
     </div>

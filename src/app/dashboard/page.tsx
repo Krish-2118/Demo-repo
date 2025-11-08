@@ -1,18 +1,20 @@
+
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search } from 'lucide-react';
+import { Target, Trophy, Box, UserCheck, Shield, Shovel, Siren, Search, Building, HeartHandshake, Fingerprint, ClipboardList } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
-import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval } from 'date-fns';
+import { subMonths, startOfMonth, endOfMonth, isWithinInterval, endOfDay } from 'date-fns';
 import { useCollection } from '@/hooks/use-collection';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
+import { useTranslation } from '@/context/translation-context';
 
 const iconMap: Record<Category, React.ReactNode> = {
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
@@ -23,6 +25,10 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Sand Mining': <Shovel className="h-4 w-4 text-muted-foreground" />,
   'Preventive Actions': <Siren className="h-4 w-4 text-muted-foreground" />,
   'Important Detections': <Search className="h-4 w-4 text-muted-foreground" />,
+  'Property Crime Cases': <Building className="h-4 w-4 text-muted-foreground" />,
+  'Crime Against Women': <HeartHandshake className="h-4 w-4 text-muted-foreground" />,
+  'Cybercrime': <Fingerprint className="h-4 w-4 text-muted-foreground" />,
+  'Others': <ClipboardList className="h-4 w-4 text-muted-foreground" />,
 };
 
 // This function converts Firestore Timestamps to Date objects
@@ -37,11 +43,15 @@ const processRecords = (records: any[] | null): PerformanceRecord[] => {
             ...r,
             id: r.id,
             date: date as Date,
+            casesRegistered: r.casesRegistered || 0,
+            casesSolved: r.casesSolved || 0,
         };
     }).filter(r => r.date instanceof Date && !isNaN(r.date.getTime()));
 };
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
+  const [isClient, setIsClient] = useState(false);
   const [filters, setFilters] = useState<{
     district: string;
     category: Category | 'all';
@@ -61,16 +71,22 @@ export default function DashboardPage() {
   const processedRecords = useMemo(() => processRecords(allRecords), [allRecords]);
   
   useEffect(() => {
+      setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     if (processedRecords.length > 0 && !isDateRangeSet) {
-      const dates = processedRecords.map(r => r.date.getTime());
-      const minDate = new Date(Math.min(...dates));
-      const maxDate = new Date(Math.max(...dates));
-      
-      setFilters(prevFilters => ({
-        ...prevFilters,
-        dateRange: { from: minDate, to: maxDate }
-      }));
-      setIsDateRangeSet(true);
+      const dates = processedRecords.map(r => r.date.getTime()).filter(t => !isNaN(t));
+      if(dates.length > 0) {
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        
+        setFilters(prevFilters => ({
+          ...prevFilters,
+          dateRange: { from: minDate, to: maxDate }
+        }));
+        setIsDateRangeSet(true);
+      }
     }
   }, [processedRecords, isDateRangeSet]);
 
@@ -84,109 +100,160 @@ export default function DashboardPage() {
   }, [filters.dateRange.from]);
 
   const filteredRecords = useMemo(() => {
-    return processedRecords.filter(r => 
-      (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
-      (filters.category === 'all' || r.category === filters.category) &&
-      (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
-    );
+    if (!processedRecords) return [];
+    
+    const selectedDistrictId = filters.district === 'all' 
+      ? null 
+      : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+
+    return processedRecords.filter(r => {
+      const isDistrictMatch = filters.district === 'all' || r.districtId === selectedDistrictId;
+      const isCategoryMatch = filters.category === 'all' || r.category === filters.category;
+      
+      const isDateInRange = filters.dateRange.from && r.date instanceof Date
+        ? isWithinInterval(r.date, { 
+            start: filters.dateRange.from, 
+            end: endOfDay(filters.dateRange.to || filters.dateRange.from) 
+          })
+        : true; 
+
+      return isDistrictMatch && isCategoryMatch && isDateInRange;
+    });
   }, [processedRecords, filters.district, filters.category, filters.dateRange]);
 
   const prevMonthRecords = useMemo(() => {
-     if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
+     if (!previousMonthDateRange.from || !previousMonthDateRange.to || !processedRecords) return [];
+     const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
      return processedRecords.filter(r => 
+       (filters.district === 'all' || r.districtId === selectedDistrictId) &&
        r.date instanceof Date && isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
      );
-  }, [processedRecords, previousMonthDateRange]);
+  }, [processedRecords, previousMonthDateRange, filters.district]);
 
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
+    
     return categories.map(category => {
-      const currentMonthValue = filteredRecords
+      const currentRegistered = filteredRecords
         .filter(r => r.category === category)
-        .reduce((sum, r) => sum + r.value, 0);
+        .reduce((sum, r) => sum + r.casesRegistered, 0);
+      const currentSolved = filteredRecords
+        .filter(r => r.category === category)
+        .reduce((sum, r) => sum + r.casesSolved, 0);
+      
+      const prevRegistered = prevMonthRecords
+        .filter(r => r.category === category)
+        .reduce((sum, r) => sum + r.casesRegistered, 0);
+      const prevSolved = prevMonthRecords
+        .filter(r => r.category === category)
+        .reduce((sum, r) => sum + r.casesSolved, 0);
 
-      const prevMonthValue = prevMonthRecords
-        .filter(r => 
-            (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
-            r.category === category
-        )
-        .reduce((sum, r) => sum + r.value, 0);
-
-      const change = prevMonthValue > 0 
-        ? ((currentMonthValue - prevMonthValue) / prevMonthValue) * 100 
-        : currentMonthValue > 0 ? 100 : 0;
+      const solveRate = currentRegistered > 0 ? (currentSolved / currentRegistered) * 100 : 0;
+      const previousSolveRate = prevRegistered > 0 ? (prevSolved / prevRegistered) * 100 : 0;
         
       return {
         category,
-        label: categoryLabels[category],
-        value: currentMonthValue,
-        change: change,
+        label: t(categoryLabels[category]),
+        casesRegistered: currentRegistered,
+        casesSolved: currentSolved,
+        solveRate,
+        previousSolveRate,
       };
     });
-  }, [filteredRecords, prevMonthRecords, filters.district]);
+  }, [filteredRecords, prevMonthRecords, t]);
+
 
   const districtPerformance = useMemo(() => {
-    const performanceMap = new Map<string, any>();
-    const initialData = { NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
-    districts.forEach(d => performanceMap.set(d.name, { name: d.name, ...initialData }));
+    // Use District ID as the key to prevent issues with translation
+    const performanceMap = new Map<number, { name: string; 'Cases Registered': number; 'Cases Solved': number }>();
 
-    filteredRecords.forEach(r => {
-        const district = districts.find(d => d.id === r.districtId);
-        if (district) {
-            const current = performanceMap.get(district.name);
-            if (current) {
-                current[r.category] = (current[r.category] || 0) + r.value;
-            }
-        }
+    districts.forEach(d => {
+        performanceMap.set(d.id, {
+            name: t(d.name),
+            'Cases Registered': 0,
+            'Cases Solved': 0
+        });
     });
 
+    filteredRecords.forEach(r => {
+        const district = performanceMap.get(r.districtId);
+        if (district) {
+            district['Cases Registered'] += r.casesRegistered;
+            district['Cases Solved'] += r.casesSolved;
+        }
+    });
+    
     return Array.from(performanceMap.values());
-  }, [filteredRecords]);
+  }, [filteredRecords, t]);
 
 
   const trendData = useMemo(() => {
     const trendMap = new Map<string, any>();
+    const langForFormatter = t('en-US'); // Use a key that can be translated
     
-    // Initialize months
+    const monthFormatter = new Intl.DateTimeFormat(langForFormatter, { month: 'short', year: 'numeric' });
+
     for (let i = 0; i < 6; i++) {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
-        const month = format(date, 'MMM yyyy');
-        const initialData = { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
-        trendMap.set(month, initialData);
+        const month = monthFormatter.format(date);
+        
+        trendMap.set(month, { 
+          month,
+          'Cases Registered': 0,
+          'Cases Solved': 0
+        });
     }
 
-    // Filter records for the last 6 months
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
     const relevantRecords = processedRecords.filter(r => r.date instanceof Date && r.date >= sixMonthsAgo);
 
-    // Aggregate data
+    const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+    const selectedCategory = filters.category;
+
     relevantRecords.forEach(record => {
-      const month = format(startOfMonth(record.date), 'MMM yyyy');
+      const month = monthFormatter.format(startOfMonth(record.date));
       const monthData = trendMap.get(month);
-      if (monthData && (filters.district === 'all' || record.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0'))) {
-        monthData[record.category] += record.value;
+
+      if (monthData && (filters.district === 'all' || record.districtId === selectedDistrictId) && (selectedCategory === 'all' || record.category === selectedCategory)) {
+        monthData['Cases Registered'] += record.casesRegistered;
+        monthData['Cases Solved'] += record.casesSolved;
       }
     });
 
     return Array.from(trendMap.values());
 
-  }, [processedRecords, filters.district]);
+  }, [processedRecords, filters.district, filters.category, t]);
+  
+  if (!isClient) {
+    return null; // Render nothing on the server
+  }
 
   return (
     <div className="flex-1 space-y-4">
-      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={processedRecords ?? []} />
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {kpiData.map((metric) => (
           <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
         ))}
       </div>
-      <div className="grid gap-4">
-        <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
+
+      <div className="grid grid-cols-1 gap-4">
+        <AiSummary districtPerformance={kpiData} isLoading={recordsLoading} />
       </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <DistrictComparisonChart data={districtPerformance} isLoading={recordsLoading} />
-        <TrendChart data={trendData} isLoading={recordsLoading} />
+        <DistrictComparisonChart 
+            data={districtPerformance} 
+            isLoading={recordsLoading}
+        />
+        <TrendChart 
+            data={trendData} 
+            isLoading={recordsLoading}
+        />
       </div>
     </div>
   );
 }
+
+    

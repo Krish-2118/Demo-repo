@@ -1,3 +1,4 @@
+'use client';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -5,35 +6,54 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { FirebaseClientProvider } from '@/firebase/client';
+import { TranslationProvider } from '@/context/translation-context';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-
-export const metadata: Metadata = {
-  title: 'Guardians In Action',
-  description: 'Smart Analytics Dashboard for Police Good Work Recognition',
-};
+const inter = Inter({ subsets: ['latin']});
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-body antialiased h-full`}>
+      <body className={`${inter.className} antialiased h-full`}>
         <FirebaseClientProvider>
-          <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
-            <div className="hidden border-r bg-muted/40 md:block">
-              <Sidebar />
+          <TranslationProvider>
+            <div
+              className={cn(
+                'grid min-h-screen w-full',
+                isSidebarCollapsed ? 'md:grid-cols-[80px_1fr]' : 'md:grid-cols-[240px_1fr]'
+              )}
+            >
+              {isClient && (
+                <Sidebar
+                  isCollapsed={isSidebarCollapsed}
+                  onToggle={toggleSidebar}
+                />
+              )}
+              <div className="flex flex-col">
+                <Header />
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+                  {children}
+                </main>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <Header />
-              <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-                {children}
-              </main>
-            </div>
-          </div>
-          <Toaster />
+            <Toaster />
+          </TranslationProvider>
         </FirebaseClientProvider>
       </body>
     </html>

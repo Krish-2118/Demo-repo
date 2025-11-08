@@ -3,27 +3,34 @@
  * @fileOverview AI flow to generate a summary of district performance insights.
  *
  * - generateDistrictPerformanceSummary - A function that generates the district performance summary.
- * - GenerateDistrictPerformanceSummaryInput - The input type for the generateDistrictPerformanceSummary function.
- * - GenerateDistrictPerformanceSummaryOutput - The return type for the generateDistrictPerformanceSummary function.
+ * - GenerateDistrictPerformanceSummaryInput - The input type for the generateDistrictPerformance-summary function.
+ * - GenerateDistrictPerformanceSummaryOutput - The return type for the generateDistrictPerformance-summary function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { type PerformanceMetric } from '@/lib/types';
 
-const KpiMetricSchema = z.object({
+const DistrictPerformanceSchema = z.object({
   category: z.string(),
   label: z.string(),
-  value: z.number(),
-  change: z.number(),
+  casesRegistered: z.number(),
+  casesSolved: z.number(),
+  solveRate: z.number(),
+  previousSolveRate: z.number(),
 });
 
+
 const GenerateDistrictPerformanceSummaryInputSchema = z.object({
-  kpiData: z.array(KpiMetricSchema).describe('An array of Key Performance Indicator metrics for various categories.'),
+  districtPerformance: z.array(DistrictPerformanceSchema).describe('An array of performance data for all categories for a specific district or all districts combined.'),
+  language: z.enum(['en', 'or']).default('en').describe("The language for the AI-generated output. 'en' for English, 'or' for Odia."),
 });
 export type GenerateDistrictPerformanceSummaryInput = z.infer<typeof GenerateDistrictPerformanceSummaryInputSchema>;
 
 const GenerateDistrictPerformanceSummaryOutputSchema = z.object({
-  summary: z.string().describe('A readable sentence summarizing the overall performance based on the provided KPIs. Highlight the most significant metric (highest value or biggest change).'),
+  summary: z.string().describe('A brief, executive-level summary analyzing the provided performance data, highlighting the most significant trends across all categories.'),
+  achievements: z.array(z.string()).describe('A list of key achievements, highlighting specific categories that are excelling.'),
+  improvements: z.array(z.string()).describe('A list of areas that need the most improvement, pointing out specific categories that are underperforming.'),
 });
 export type GenerateDistrictPerformanceSummaryOutput = z.infer<typeof GenerateDistrictPerformanceSummaryOutputSchema>;
 
@@ -37,21 +44,27 @@ const prompt = ai.definePrompt({
   name: 'generateDistrictPerformanceSummaryPrompt',
   input: {schema: GenerateDistrictPerformanceSummaryInputSchema},
   output: {schema: GenerateDistrictPerformanceSummaryOutputSchema},
-  prompt: `You are an expert data analyst specializing in law enforcement performance.
+  prompt: `You are an expert data analyst for a police department. Your task is to provide a very concise, structured, and insightful analysis of the following performance data. The data represents either a single district's performance or an aggregation of all districts.
 
-  Generate a concise, readable, and insightful sentence summarizing the overall performance based on the provided Key Performance Indicators (KPIs).
+  Your analysis should focus on the 'solveRate' and its change compared to the 'previousSolveRate'.
 
-  Your summary should:
-  1. Briefly mention the overall trend.
-  2. Highlight the most notable metric. This could be the category with the highest value, the most significant positive change, or the most concerning negative change.
-  3. Be insightful and sound like a professional analyst.
+  IMPORTANT: Generate the entire output in the requested language: {{{language}}}. 'en' is for English, and 'or' is for Odia.
 
-  KPI Data:
-  {{#each kpiData}}
-  - Category: {{{label}}}, Value: {{{value}}}, Change from last month: {{{change}}}%
+  Generate a short report with three sections:
+  1.  **summary**: A brief, executive-level summary (one sentence).
+  2.  **achievements**: A bulleted list of the top 2 categories with the highest 'solveRate' or the most significant positive improvement.
+  3.  **improvements**: A bulleted list of the single most critical category with the lowest 'solveRate' or most significant negative change.
+
+
+  Performance Data:
+  {{#each districtPerformance}}
+  - **Category: {{{label}}}**
+    - Cases Registered: {{{casesRegistered}}}
+    - Cases Solved: {{{casesSolved}}}
+    - Current Solve Rate: {{{solveRate}}}%
+    - Previous Month's Solve Rate: {{{previousSolveRate}}}%
   {{/each}}
-
-  Based on this data, provide a single, compelling summary sentence.`,
+  `,
 });
 
 const generateDistrictPerformanceSummaryFlow = ai.defineFlow(
