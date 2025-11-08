@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-body antialiased h-full`}>
+      <body className={`${inter.variable} font-sans antialiased h-full`}>
         <FirebaseClientProvider>
           <TranslationProvider>
             <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
