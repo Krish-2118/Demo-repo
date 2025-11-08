@@ -23,7 +23,9 @@ const GenerateDistrictPerformanceSummaryInputSchema = z.object({
 export type GenerateDistrictPerformanceSummaryInput = z.infer<typeof GenerateDistrictPerformanceSummaryInputSchema>;
 
 const GenerateDistrictPerformanceSummaryOutputSchema = z.object({
-  summary: z.string().describe('A brief, executive-level summary analyzing the provided performance data. The summary should be a single paragraph, highlighting only the most significant data points, achievements, and areas needing attention.'),
+  summary: z.string().describe('A brief, executive-level summary analyzing the provided performance data, highlighting the most significant trends.'),
+  achievements: z.array(z.string()).describe('A list of key achievements or strongest areas of performance.'),
+  improvements: z.array(z.string()).describe('A list of areas that need the most improvement.'),
 });
 export type GenerateDistrictPerformanceSummaryOutput = z.infer<typeof GenerateDistrictPerformanceSummaryOutputSchema>;
 
@@ -37,21 +39,18 @@ const prompt = ai.definePrompt({
   name: 'generateDistrictPerformanceSummaryPrompt',
   input: {schema: GenerateDistrictPerformanceSummaryInputSchema},
   output: {schema: GenerateDistrictPerformanceSummaryOutputSchema},
-  prompt: `You are an expert data analyst. Your task is to provide a clean, short, and precise summary of the following police performance data.
+  prompt: `You are an expert data analyst for a police department. Your task is to provide a clear, structured, and insightful analysis of the following performance data.
 
-  Focus on the most important takeaways. Generate a single paragraph that includes:
-  1.  A brief overall assessment.
-  2.  The most significant positive result (e.g., largest increase or highest value).
-  3.  The most significant area for improvement (e.g., largest decrease or lowest value).
+  Generate a report with three sections:
+  1.  **summary**: A brief, one-paragraph overview of the overall performance.
+  2.  **achievements**: A bulleted list of the top 2-3 most significant positive results (e.g., largest percentage increase in a positive category or highest values). Be specific and use the data.
+  3.  **improvements**: A bulleted list of the top 2-3 most significant areas for improvement (e.g., largest decrease or underperforming categories). Be specific and use the data.
 
-  Keep the language direct and data-driven.
 
   KPI Data:
   {{#each kpiData}}
   - **{{{label}}}**: Current value is {{{value}}}. This is a change of {{{change}}}% from last month.
   {{/each}}
-
-  Based on this data, provide a concise, one-paragraph summary.
   `,
 });
 
