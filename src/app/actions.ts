@@ -20,18 +20,18 @@ export async function getAiSummary() {
 }
 
 export async function uploadManualRecord(data: {districtId: number, category: string, value: number, date: Date}) {
-    console.log("Manual record submitted (not saved):", data);
-    // This is a placeholder. In a real app, you'd save this to a database.
+    console.log("DEMO: Manual record submitted but not saved to a database:", data);
+    // This is a placeholder. In a real app, you would save this to a database.
     await new Promise(resolve => setTimeout(resolve, 500));
-    return { success: true, message: 'Record submitted successfully (demo).' };
+    return { success: true, message: 'Record submitted successfully (demo only).' };
 }
 
 
 export async function uploadPerformanceData(data: any[]) {
-    console.log("Performance data submitted (not saved):", data);
-    // This is a placeholder. In a real app, you'd save this to a database.
+    console.log("DEMO: Performance data from file submitted but not saved to a database:", data);
+    // This is a placeholder. In a real app, you would save this to a database.
     await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: `${data.length} records processed successfully (demo).` };
+    return { success: true, message: `${data.length} records processed successfully (demo only).` };
 }
 
 export async function parsePdf(fileAsDataUrl: string) {
