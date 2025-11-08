@@ -44,16 +44,16 @@ const prompt = ai.definePrompt({
   name: 'generateDistrictPerformanceSummaryPrompt',
   input: {schema: GenerateDistrictPerformanceSummaryInputSchema},
   output: {schema: GenerateDistrictPerformanceSummaryOutputSchema},
-  prompt: `You are an expert data analyst for a police department. Your task is to provide a clear, structured, and insightful analysis of the following performance data. The data represents either a single district's performance or an aggregation of all districts.
+  prompt: `You are an expert data analyst for a police department. Your task is to provide a very concise, structured, and insightful analysis of the following performance data. The data represents either a single district's performance or an aggregation of all districts.
 
   Your analysis should focus on the 'solveRate' and its change compared to the 'previousSolveRate'.
 
   IMPORTANT: Generate the entire output in the requested language: {{{language}}}. 'en' is for English, and 'or' is for Odia.
 
-  Generate a report with three sections:
-  1.  **summary**: A brief, one-paragraph overview of the overall performance. Mention the overall trend in solve rates.
-  2.  **achievements**: A bulleted list of the top 2-3 categories with the highest 'solveRate' or the most significant positive improvement from 'previousSolveRate'. Mention specific categories by name and their achievements (e.g., "Firearms Seized saw a 20% improvement in solve rate, reaching 95%.").
-  3.  **improvements**: A bulleted list of the top 2-3 categories with the lowest 'solveRate' or the most significant negative change. Mention specific categories and their weak points (e.g., "Cybercrime solve rate is the lowest at 15%, requiring urgent attention.").
+  Generate a short report with three sections:
+  1.  **summary**: A brief, executive-level summary (one sentence).
+  2.  **achievements**: A bulleted list of the top 2 categories with the highest 'solveRate' or the most significant positive improvement.
+  3.  **improvements**: A bulleted list of the single most critical category with the lowest 'solveRate' or most significant negative change.
 
 
   Performance Data:
