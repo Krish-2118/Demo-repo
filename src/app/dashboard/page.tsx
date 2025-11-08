@@ -97,7 +97,7 @@ export default function DashboardPage() {
       (filters.category === 'all' || r.category === filters.category) &&
       (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
-  }, [processedRecords, filters.district, filters.category, filters.dateRange]);
+  }, [processedRecords, filters]);
 
   const prevMonthRecords = useMemo(() => {
      if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
