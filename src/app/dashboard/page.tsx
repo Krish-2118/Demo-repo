@@ -218,7 +218,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
+          <AiSummary districtPerformance={districtPerformance} isLoading={recordsLoading} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

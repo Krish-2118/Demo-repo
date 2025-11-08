@@ -14,6 +14,7 @@ export const translations = {
     'Upload Performance Data': 'ପ୍ରଦର୍ଶନ ଡାଟା ଅପଲୋଡ୍ କରନ୍ତୁ',
     'Upload files or enter records manually to add performance data.': 'ପ୍ରଦର୍ଶନ ଡାଟା ଯୋଡିବା ପାଇଁ ଫାଇଲ୍ ଅପଲୋଡ୍ କରନ୍ତୁ କିମ୍ବା ମାନୁଆଲ ଭାବରେ ରେକର୍ଡଗୁଡିକ ପ୍ରବେଶ କରନ୍ତୁ |',
     'File Upload': 'ଫାଇଲ୍ ଅପଲୋଡ୍',
+    'Text Input (AI)': 'ପାଠ୍ୟ ଇନପୁଟ୍ (AI)',
     'Manual Entry': 'ମାନୁଆଲ୍ ଏଣ୍ଟ୍ରି',
     'Select District': 'ଜିଲ୍ଲା ଚୟନ କରନ୍ତୁ',
     'All Districts': 'ସମସ୍ତ ଜିଲ୍ଲା',
@@ -125,6 +126,22 @@ export const translations = {
     'Could not generate suggestions at this time.': 'ଏହି ସମୟରେ ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
     'AI Improvement Suggestions for': 'ପାଇଁ AI ଉନ୍ନତି ପରାମର୍ଶ',
     'Based on the lowest performing categories, here are some actionable recommendations.': 'ସବୁଠାରୁ କମ୍ ପ୍ରଦର୍ଶନ କରୁଥିବା ବର୍ଗଗୁଡିକ ଉପରେ ଆଧାର କରି, ଏଠାରେ କିଛି କାର୍ଯ୍ୟକ୍ଷମ ସୁପାରିଶ ଦିଆଯାଇଛି |',
-    'Generating suggestions...': 'ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଉଛି...'
+    'Generating suggestions...': 'ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଉଛି...',
+    'Crime Against Women': 'ମହିଳାଙ୍କ ବିରୋଧରେ ଅପରାଧ',
+    'Cybercrime': 'ସାଇବର ଅପରାଧ',
+    'Road Accidents': 'ସଡକ ଦୁର୍ଘଟଣା',
+    'Paste any unstructured text here. For example: \'Ganjam district reported 5 narcotics seizures and 2 important detections on 2023-10-26. Cuttack had 12 NBW executions on the same day.\'': 'ଏଠାରେ ଯେକୌଣସି ଅସଂଗଠିତ ପାଠ୍ୟ ପେଷ୍ଟ କରନ୍ତୁ | ଉଦାହରଣ ସ୍ୱରୂପ: \'ଗଞ୍ଜାମ ଜିଲ୍ଲା ୨୦୨୩-୧୦-୨୬ ରେ ୫ ଟି ନିଶାଦ୍ରବ୍ୟ ଜବତ ଏବଂ ୨ ଟି ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ସନ୍ଧାନ ରିପୋର୍ଟ କରିଛି | ସେହି ଦିନ କଟକରେ ୧୨ ଟି NBW କାର୍ଯ୍ୟକାରିତା ହୋଇଥିଲା |\'',
+    'Process with AI': 'AI ସହିତ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ',
+    'Processing with AI...': 'AI ସହିତ ପ୍ରକ୍ରିୟାକରଣ କରାଯାଉଛି...',
+    'No text provided': 'କୌଣସି ପାଠ୍ୟ ପ୍ରଦାନ କରାଯାଇ ନାହିଁ',
+    'Please enter some text to process.': 'ଦୟାକରି ପ୍ରକ୍ରିୟାକରଣ ପାଇଁ କିଛି ପାଠ୍ୟ ପ୍ରବେଶ କରନ୍ତୁ |',
+    'Processing Text with AI': 'AI ସହିତ ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣ',
+    'AI Processing Complete': 'AI ପ୍ରକ୍ରିୟାକରଣ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା',
+    'AI could not find any structured data in the text provided.': 'ପ୍ରଦାନ କରାଯାଇଥିବା ପାଠ୍ୟରେ AI କୌଣସି ସଂଗଠିତ ଡାଟା ପାଇଲା ନାହିଁ |',
+    'Error processing text.': 'ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣରେ ତ୍ରୁଟି।',
+    'Please process some text before saving.': 'ଦୟାକରି ସେଭ୍ କରିବା ପୂର୍ବରୁ କିଛି ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ |',
+    'Upload failed. No valid records were found in the text. Please check the content.': 'ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ପାଠ୍ୟରେ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ବିଷୟବସ୍ତୁ ଯାଞ୍ଚ କରନ୍ତୁ।',
+    'Achievements': 'ଉପଲବ୍ଧି',
+    'Areas for Improvement': 'ଉନ୍ନତି ପାଇଁ କ୍ଷେତ୍ର'
   }
 };

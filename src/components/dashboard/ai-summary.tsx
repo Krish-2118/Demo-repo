@@ -6,11 +6,10 @@ import { generateDistrictPerformanceSummary, type GenerateDistrictPerformanceSum
 import { Lightbulb, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { PerformanceMetric } from '@/lib/types';
 import { useTranslation } from '@/context/translation-context';
 
 interface AiSummaryProps {
-  kpiData: PerformanceMetric[];
+  districtPerformance: any[];
   isLoading: boolean;
 }
 
@@ -20,14 +19,16 @@ const initialSummaryState: GenerateDistrictPerformanceSummaryOutput = {
     improvements: [],
 }
 
-export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
+export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const [summary, setSummary] = useState<GenerateDistrictPerformanceSummaryOutput>(initialSummaryState);
   const [isPending, startTransition] = useTransition();
   const [errorState, setErrorState] = useState<string | null>(null);
   const { t } = useTranslation();
 
   const handleGenerateSummary = useCallback(() => {
-    if (!kpiData || kpiData.every(d => d.value === 0)) {
+    const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => Object.values(d).some(val => typeof val === 'number' && val > 0));
+
+    if (!hasData) {
         setErrorState(t('Not enough data to generate an insight. Please select a different date range or district.'));
         setSummary(initialSummaryState);
         return;
@@ -36,7 +37,7 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
     startTransition(async () => {
       setErrorState(null);
       try {
-        const result = await generateDistrictPerformanceSummary({ kpiData });
+        const result = await generateDistrictPerformanceSummary({ districtPerformance });
         setSummary(result);
       } catch (error) {
         console.error('Error generating AI summary:', error);
@@ -44,14 +45,14 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
         setSummary(initialSummaryState);
       }
     });
-  }, [kpiData, t]);
+  }, [districtPerformance, t]);
 
   useEffect(() => {
     // Generate summary when data is loaded and available
-    if (!isLoading && kpiData && kpiData.length > 0) {
+    if (!isLoading && districtPerformance) {
       handleGenerateSummary();
     }
-  }, [isLoading, kpiData, handleGenerateSummary]);
+  }, [isLoading, districtPerformance, handleGenerateSummary]);
 
   const renderContent = () => {
     if (isPending || isLoading) {
@@ -82,7 +83,7 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
             <p className="text-sm text-foreground/80">{summary.summary}</p>
             {summary.achievements && summary.achievements.length > 0 && (
                 <div>
-                    <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-green-600"><CheckCircle size={18} /> Achievements</h4>
+                    <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-green-600"><CheckCircle size={18} /> {t('Achievements')}</h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
                         {summary.achievements.map((item, index) => <li key={`ach-${index}`}>{item}</li>)}
                     </ul>
@@ -90,7 +91,7 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
             )}
             {summary.improvements && summary.improvements.length > 0 && (
                 <div>
-                    <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-amber-600"><AlertCircle size={18} /> Areas for Improvement</h4>
+                    <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-amber-600"><AlertCircle size={18} /> {t('Areas for Improvement')}</h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
                         {summary.improvements.map((item, index) => <li key={`imp-${index}`}>{item}</li>)}
                     </ul>
