@@ -89,9 +89,8 @@ export default function DashboardPage() {
   }, [filters.dateRange.from]);
 
   const filteredRecords = useMemo(() => {
-    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
     return processedRecords.filter(r => 
-      (filters.district === 'all' || (selectedDistrictId && r.districtId === selectedDistrictId)) &&
+      (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
       (filters.category === 'all' || r.category === filters.category) &&
       (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
