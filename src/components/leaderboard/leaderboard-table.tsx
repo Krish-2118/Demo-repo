@@ -38,6 +38,7 @@ type ScoreData = {
     totalCasesSolved: number;
     solveRate: number;
     overallScore: number;
+    performance: any;
 };
 
 
@@ -49,7 +50,7 @@ export function LeaderboardTable() {
     const { toast } = useToast();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedDistrict, setSelectedDistrict] = useState<any | null>(null);
+    const [selectedDistrict, setSelectedDistrict] = useState<ScoreData | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isGenerating, startGenerating] = useTransition();
 
@@ -92,7 +93,7 @@ export function LeaderboardTable() {
 
     }, [records, t]);
 
-    const handleGetSuggestions = (districtData: ScoreData & { performance: any }) => {
+    const handleGetSuggestions = (districtData: ScoreData) => {
         setSelectedDistrict(districtData);
         setIsDialogOpen(true);
         setSuggestions([]); // Clear previous suggestions
@@ -222,7 +223,7 @@ export function LeaderboardTable() {
             </CardContent>
         </Card>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{t('AI Improvement Suggestions for')} {selectedDistrict?.name}</DialogTitle>
                     <DialogDescription>
@@ -231,14 +232,14 @@ export function LeaderboardTable() {
                 </DialogHeader>
                 <div className="py-4">
                     {isGenerating ? (
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="flex items-center justify-center space-x-2 text-muted-foreground">
                             <Loader2 className="h-6 w-6 animate-spin" />
                             <span>{t('Generating...')}</span>
                         </div>
                     ) : (
-                        <ul className="space-y-4 list-disc pl-5">
+                        <ul className="space-y-3 list-disc pl-5">
                             {suggestions.map((suggestion, index) => (
-                                <li key={index} className="text-sm text-foreground/80">{suggestion}</li>
+                                <li key={index} className="text-sm text-foreground/90">{suggestion}</li>
                             ))}
                         </ul>
                     )}
