@@ -11,7 +11,6 @@ import { revalidatePath } from 'next/cache';
 function getAdminFirestore() {
   if (!getApps().length) {
     // In a managed environment like App Hosting, initializeApp() discovers credentials automatically.
-    // When GOOGLE_APPLICATION_CREDENTIALS is set, it will use that.
     initializeApp();
   }
   return getFirestore();

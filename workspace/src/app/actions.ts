@@ -2,7 +2,7 @@
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
@@ -10,15 +10,8 @@ import { revalidatePath } from 'next/cache';
 // Helper to initialize Firebase Admin and return Firestore instance
 function getAdminFirestore() {
   if (!getApps().length) {
-    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    if (!serviceAccountString) {
-      throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
-    }
-    const serviceAccount = JSON.parse(serviceAccountString);
-
-    initializeApp({
-        credential: cert(serviceAccount)
-    });
+    // In a managed environment like App Hosting, initializeApp() discovers credentials automatically.
+    initializeApp();
   }
   return getFirestore();
 }
