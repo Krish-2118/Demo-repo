@@ -112,10 +112,10 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
                 queryConstraints.push(where('category', '==', category));
             }
             if (date?.from) {
-                queryConstraints.push(where('date', '>=', Timestamp.fromDate(date.from)));
                 // If only `from` is set, treat it as a single-day filter.
-                const endDate = date.to ? date.to : endOfDay(date.from);
-                queryConstraints.push(where('date', '<=', Timestamp.fromDate(endDate)));
+                const endDate = date.to ? date.to : date.from;
+                queryConstraints.push(where('date', '>=', Timestamp.fromDate(date.from)));
+                queryConstraints.push(where('date', '<=', Timestamp.fromDate(endOfDay(endDate))));
             }
 
             if (queryConstraints.length === 0) {
