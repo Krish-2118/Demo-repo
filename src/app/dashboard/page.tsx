@@ -236,7 +236,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4">
         <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <CaseDetailsGroup metrics={caseDetailsKpi} iconMap={iconMap} isLoading={recordsLoading} />
             {otherKpi.map((metric) => (
                 <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
