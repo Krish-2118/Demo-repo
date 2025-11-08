@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { Calendar as CalendarIcon, Download, Trash2, ChevronDown } from 'lucide-react';
-import { format, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
+import { endOfDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -149,6 +150,8 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
 
         if (startDate && !endDate) {
           endDate = endOfDay(startDate);
+        } else if (endDate) {
+          endDate = endOfDay(endDate);
         }
 
         if (startDate) {

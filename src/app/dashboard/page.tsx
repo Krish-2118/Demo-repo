@@ -89,8 +89,9 @@ export default function DashboardPage() {
   }, [filters.dateRange.from]);
 
   const filteredRecords = useMemo(() => {
+    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
     return processedRecords.filter(r => 
-      (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
+      (filters.district === 'all' || (selectedDistrictId && r.districtId === selectedDistrictId)) &&
       (filters.category === 'all' || r.category === filters.category) &&
       (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
@@ -105,6 +106,8 @@ export default function DashboardPage() {
 
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
+    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+
     return categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
@@ -112,7 +115,7 @@ export default function DashboardPage() {
 
       const prevMonthValue = prevMonthRecords
         .filter(r => 
-            (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
+            (filters.district === 'all' || (selectedDistrictId && r.districtId === selectedDistrictId)) &&
             r.category === category
         )
         .reduce((sum, r) => sum + r.value, 0);
@@ -157,6 +160,7 @@ export default function DashboardPage() {
 
   const trendData = useMemo(() => {
     const trendMap = new Map<string, any>();
+    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
     
     // Initialize months
     for (let i = 0; i < 6; i++) {
@@ -177,7 +181,7 @@ export default function DashboardPage() {
     relevantRecords.forEach(record => {
       const month = format(startOfMonth(record.date), 'MMM yyyy');
       const monthData = trendMap.get(month);
-      if (monthData && (filters.district === 'all' || record.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0'))) {
+      if (monthData && (filters.district === 'all' || (selectedDistrictId && record.districtId === selectedDistrictId))) {
         if(record.category in monthData){
             monthData[record.category] += record.value;
         }
