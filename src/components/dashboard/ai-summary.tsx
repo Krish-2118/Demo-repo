@@ -87,6 +87,10 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
         return <p className="text-sm text-muted-foreground">{t('Click the refresh button to generate an AI insight for the current data.')}</p>
     }
     
+    if (!summary.summary && hasGenerated) {
+        return <p className="text-sm text-muted-foreground">{t('The AI did not return a summary for the current data.')}</p>
+    }
+
     return (
         <div className="space-y-4">
             <p className="text-sm text-foreground/80">{summary.summary}</p>
