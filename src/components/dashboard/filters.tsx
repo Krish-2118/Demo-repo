@@ -1,10 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { Calendar as CalendarIcon, Download, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, Trash2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -22,6 +24,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -36,7 +44,7 @@ import type { Category, Record } from '@/lib/types';
 import { useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase/client';
-import { collection, query, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, Timestamp, endOfDay } from 'firebase/firestore';
 
 
 type FiltersProps = {
@@ -74,7 +82,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   }, [district, category, date, onFilterChange]);
 
 
-  const handleExport = () => {
+  const handleExportExcel = () => {
     startExportTransition(() => {
         const dataToExport = allRecords.map(record => {
             return {
@@ -92,6 +100,31 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
     });
   };
 
+  const handleExportPdf = () => {
+    startExportTransition(() => {
+        const doc = new jsPDF();
+        const tableColumn = ["District", "Category", "Value", "Date"];
+        const tableRows: any[][] = [];
+
+        const dataToExport = allRecords.map(record => ([
+            districts.find(d => d.id === record.districtId)?.name || 'Unknown',
+            record.category,
+            record.value,
+            record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
+        ]));
+
+        tableRows.push(...dataToExport);
+
+        (doc as any).autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 20,
+        });
+        doc.text("Police Performance Report", 14, 15);
+        doc.save(`PolicePerformanceReport_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    });
+  };
+
   const handleCleanData = () => {
     startCleanTransition(async () => {
         if (!firestore) {
@@ -99,26 +132,36 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             return;
         }
 
-        if (category === 'all' && (!date?.from || !date?.to)) {
-            toast({ title: 'Filter required', description: 'Please select a specific category or a date range to clean data.', variant: 'destructive' });
-            return;
+        const queries = [];
+        
+        if (district !== 'all') {
+          const selectedDistrict = districts.find(d => d.name.toLowerCase() === district);
+          if (selectedDistrict) {
+            queries.push(where('districtId', '==', selectedDistrict.id));
+          }
+        }
+        if (category !== 'all') {
+            queries.push(where('category', '==', category));
+        }
+
+        let startDate = date?.from;
+        let endDate = date?.to;
+
+        if (startDate && !endDate) {
+          endDate = endOfDay(startDate);
+        }
+
+        if (startDate) {
+            queries.push(where('date', '>=', Timestamp.fromDate(startDate)));
+        }
+        if (endDate) {
+            queries.push(where('date', '<=', Timestamp.fromDate(endDate)));
         }
 
         try {
             const recordsRef = collection(firestore, 'records');
-            let queries = [];
-
-            if (category !== 'all') {
-                queries.push(where('category', '==', category));
-            }
-            if (date?.from) {
-                queries.push(where('date', '>=', Timestamp.fromDate(date.from)));
-            }
-            if (date?.to) {
-                queries.push(where('date', '<=', Timestamp.fromDate(date.to)));
-            }
-
-            const q = query(recordsRef, ...queries);
+            const q = queries.length > 0 ? query(recordsRef, ...queries) : query(recordsRef);
+            
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -144,10 +187,33 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   };
   
   const getCleanConfirmationDescription = () => {
-    const catDescription = category === 'all' ? 'all records' : `all records in the "${categoryLabels[category]}" category`;
-    const dateDescription = (date?.from && date.to) ? `between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}` : "across all dates";
+    let description = 'This will permanently delete ';
+    const parts = [];
 
-    return `This will permanently delete ${catDescription} ${category === 'all' ? '' : ' '} ${dateDescription}. This action cannot be undone.`;
+    if (district !== 'all') {
+      const selectedDistrict = districts.find(d => d.name.toLowerCase() === district);
+      parts.push(`records for the "${selectedDistrict?.name}" district`);
+    }
+
+    if (category !== 'all') {
+      parts.push(`records in the "${categoryLabels[category]}" category`);
+    }
+
+    if (date?.from) {
+      if (date.to) {
+        parts.push(`between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}`);
+      } else {
+        parts.push(`on ${format(date.from, 'LLL dd, y')}`);
+      }
+    }
+
+    if (parts.length === 0) {
+      return 'This will permanently delete ALL records in the database. This action cannot be undone.';
+    }
+
+    description += parts.join(' and ');
+    description += '. This action cannot be undone.';
+    return description;
   }
 
   return (
@@ -222,11 +288,25 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
         </div>
       </div>
       <div className='flex gap-2'>
-        <Button onClick={handleExport} disabled={isExportPending} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            {isExportPending ? 'Exporting...' : 'Export'}
-        </Button>
-        <Button onClick={() => setIsCleanConfirmOpen(true)} variant="destructive" disabled={isCleanPending || (category === 'all' && !date?.from)}>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExportPending}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {isExportPending ? 'Exporting...' : 'Export'}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel}>
+                    Export as Excel (.xlsx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPdf}>
+                    Export as PDF (.pdf)
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button onClick={() => setIsCleanConfirmOpen(true)} variant="destructive" disabled={isCleanPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             {isCleanPending ? 'Cleaning...' : 'Clean Data'}
         </Button>
