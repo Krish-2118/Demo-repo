@@ -95,7 +95,7 @@ export function FileUploader() {
         processFile(newFile);
       }
     },
-    [] // Removed toast from dependency array as it's stable
+    [toast]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -131,13 +131,13 @@ export function FileUploader() {
     startSaving(async () => {
         toast({
             title: 'Saving Data',
-            description: 'Submitting records...',
+            description: 'Submitting records to the database...',
         });
         try {
             const result = await uploadPerformanceData(parsedData);
             if (result.success) {
                 toast({
-                    title: 'Submission Successful (Demo)',
+                    title: 'Save Successful',
                     description: result.message,
                 });
                 setFile(null); // Clear file and data after successful save

@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -14,54 +14,14 @@ import { Crown } from 'lucide-react';
 import { districts } from '@/lib/data';
 import type { Record as PerformanceRecord } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
-
-const generateMockData = (): PerformanceRecord[] => {
-  const staticData = [
-    { districtId: 2, category: 'NBW', value: 95 },
-    { districtId: 2, category: 'Conviction', value: 88 },
-    { districtId: 2, category: 'Narcotics', value: 92 },
-    { districtId: 2, category: 'Missing Person', value: 78 },
-    { districtId: 1, category: 'NBW', value: 85 },
-    { districtId: 1, category: 'Conviction', value: 91 },
-    { districtId: 1, category: 'Narcotics', value: 80 },
-    { districtId: 1, category: 'Missing Person', value: 82 },
-    { districtId: 4, category: 'NBW', value: 75 },
-    { districtId: 4, category: 'Conviction', value: 80 },
-    { districtId: 4, category: 'Narcotics', value: 88 },
-    { districtId: 4, category: 'Missing Person', value: 90 },
-    { districtId: 3, category: 'NBW', value: 65 },
-    { districtId: 3, category: 'Conviction', value: 72 },
-    { districtId: 3, category: 'Narcotics', value: 68 },
-    { districtId: 3, category: 'Missing Person', value: 75 },
-    { districtId: 5, category: 'NBW', value: 55 },
-    { districtId: 5, category: 'Conviction', value: 60 },
-    { districtId: 5, category: 'Narcotics', value: 62 },
-    { districtId: 5, category: 'Missing Person', value: 58 },
-    { districtId: 6, category: 'NBW', value: 45 },
-    { districtId: 6, category: 'Conviction', value: 50 },
-    { districtId: 6, category: 'Narcotics', value: 52 },
-    { districtId: 6, category: 'Missing Person', value: 48 },
-  ];
-
-  return staticData.map((item, index) => ({
-    id: (index + 1).toString(),
-    districtId: item.districtId,
-    category: item.category as any,
-    value: item.value,
-    date: new Date(),
-  }));
-};
-
+import { useCollection } from '@/hooks/use-collection';
+import { collection, query } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/client';
 
 export function LeaderboardTable() {
-    const [records, setRecords] = useState<PerformanceRecord[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        // Generate mock data on the client side to avoid hydration errors
-        setRecords(generateMockData());
-        setIsLoading(false);
-    }, []);
+    const firestore = useFirestore();
+    const recordsQuery = useMemo(() => firestore ? query(collection(firestore, "records")) : null, [firestore]);
+    const { data: records, loading: isLoading } = useCollection(recordsQuery);
 
     const leaderboardData = useMemo(() => {
         if (!records) return [];
@@ -100,7 +60,7 @@ export function LeaderboardTable() {
         <Card className="rounded-xl shadow-lg">
             <CardHeader>
                 <CardTitle>Top 5 Performing Districts</CardTitle>
-                <CardDescription>Based on overall performance score.</CardDescription>
+                <CardDescription>Based on overall performance score from live data.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>

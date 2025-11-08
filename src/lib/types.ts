@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Timestamp } from 'firebase/firestore';
 
 export type District = {
   id: number;
@@ -12,7 +13,7 @@ export type Record = {
   districtId: number;
   category: Category;
   value: number;
-  date: Date;
+  date: Date | Timestamp;
 };
 
 export type PerformanceMetric = {

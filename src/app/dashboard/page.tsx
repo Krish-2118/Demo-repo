@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
@@ -9,8 +9,10 @@ import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
-import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns';
-
+import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval } from 'date-fns';
+import { useCollection } from '@/hooks/use-collection';
+import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/client';
 
 const iconMap: Record<Category, React.ReactNode> = {
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
@@ -19,26 +21,15 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Missing Person': <UserCheck className="h-4 w-4 text-muted-foreground" />,
 };
 
-const generateMockData = (dateRange: DateRange): PerformanceRecord[] => {
-    const data: PerformanceRecord[] = [];
-    const categories: Category[] = ['NBW', 'Conviction', 'Narcotics', 'Missing Person'];
-    let idCounter = 0;
-
-    if (!dateRange.from) return [];
-
-    for (const district of districts) {
-        for (const category of categories) {
-            data.push({
-                id: (idCounter++).toString(),
-                districtId: district.id,
-                category: category,
-                value: Math.floor(Math.random() * 100) + 1,
-                date: dateRange.from,
-            });
-        }
-    }
-    return data;
-}
+// This function converts Firestore Timestamps to Date objects
+const processRecords = (records: any[] | null): PerformanceRecord[] => {
+    if (!records) return [];
+    return records.map(r => ({
+        ...r,
+        id: r.id,
+        date: r.date.toDate(),
+    }));
+};
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({
@@ -49,10 +40,13 @@ export default function DashboardPage() {
       to: endOfMonth(new Date()),
     } as DateRange,
   });
-  
-  const [records, setRecords] = useState<PerformanceRecord[]>([]);
-  const [recordsLoading, setRecordsLoading] = useState(true);
 
+  const firestore = useFirestore();
+  const recordsQuery = useMemo(() => firestore ? query(collection(firestore, 'records')) : null, [firestore]);
+  const { data: allRecords, loading: recordsLoading } = useCollection(recordsQuery);
+
+  const processedRecords = useMemo(() => processRecords(allRecords), [allRecords]);
+  
   const previousMonthDateRange = useMemo(() => {
     if (!filters.dateRange.from) return { from: undefined, to: undefined };
     const prevMonth = subMonths(filters.dateRange.from, 1);
@@ -62,22 +56,20 @@ export default function DashboardPage() {
     }
   }, [filters.dateRange.from]);
 
-  const [prevRecords, setPrevRecords] = useState<PerformanceRecord[]>([]);
-
-  useEffect(() => {
-    setRecords(generateMockData(filters.dateRange));
-    setPrevRecords(generateMockData(previousMonthDateRange));
-    setRecordsLoading(false);
-  }, [filters.dateRange, previousMonthDateRange]);
-
-
   const filteredRecords = useMemo(() => {
-    if (!records) return [];
-    return records.filter(r => 
+    return processedRecords.filter(r => 
       (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
-      (filters.category === 'all' || r.category === filters.category)
+      (filters.category === 'all' || r.category === filters.category) &&
+      (filters.dateRange.from && filters.dateRange.to && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
-  }, [records, filters.district, filters.category]);
+  }, [processedRecords, filters.district, filters.category, filters.dateRange]);
+
+  const prevMonthRecords = useMemo(() => {
+     if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
+     return processedRecords.filter(r => 
+       isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
+     );
+  }, [processedRecords, previousMonthDateRange]);
 
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = ['NBW', 'Conviction', 'Narcotics', 'Missing Person'];
@@ -86,7 +78,7 @@ export default function DashboardPage() {
         .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
 
-      const prevMonthValue = (prevRecords || [])
+      const prevMonthValue = prevMonthRecords
         .filter(r => 
             (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
             r.category === category
@@ -104,14 +96,13 @@ export default function DashboardPage() {
         change: change,
       };
     });
-  }, [filteredRecords, prevRecords, filters.district]);
+  }, [filteredRecords, prevMonthRecords, filters.district]);
 
   const districtPerformance = useMemo(() => {
-    if (!records) return [];
     const performanceMap = new Map<string, any>();
     districts.forEach(d => performanceMap.set(d.name, { name: d.name, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 }));
 
-    records.forEach(r => {
+    filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
         if (district) {
             const current = performanceMap.get(district.name);
@@ -122,31 +113,39 @@ export default function DashboardPage() {
     });
 
     return Array.from(performanceMap.values());
-  }, [records]);
+  }, [filteredRecords]);
 
 
   const trendData = useMemo(() => {
-    if (!records) return [];
     const trendMap = new Map<string, any>();
-
-    for (let i = 0; i < 4; i++) {
-        const date = startOfMonth(subMonths(new Date(), 3 - i));
+    
+    // Initialize months
+    for (let i = 0; i < 6; i++) {
+        const date = startOfMonth(subMonths(new Date(), 5 - i));
         const month = format(date, 'MMM yyyy');
-        const monthData: any = { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 };
-        
-        ['NBW', 'Conviction', 'Narcotics', 'Missing Person'].forEach(cat => {
-            monthData[cat] = Math.floor(Math.random() * 400) + 50;
-        });
-        trendMap.set(month, monthData);
+        trendMap.set(month, { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 });
     }
+
+    // Filter records for the last 6 months
+    const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
+    const relevantRecords = processedRecords.filter(r => r.date >= sixMonthsAgo);
+
+    // Aggregate data
+    relevantRecords.forEach(record => {
+      const month = format(startOfMonth(record.date), 'MMM yyyy');
+      const monthData = trendMap.get(month);
+      if (monthData && (filters.district === 'all' || record.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0'))) {
+        monthData[record.category] += record.value;
+      }
+    });
 
     return Array.from(trendMap.values());
 
-  }, [records]);
+  }, [processedRecords, filters.district]);
 
   return (
     <div className="flex-1 space-y-4">
-      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={records ?? []} />
+      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiData.map((metric) => (
           <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
