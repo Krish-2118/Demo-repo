@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Trophy,
   Upload,
-  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +13,6 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { href: '/upload', icon: Upload, label: 'Upload Data' },
-  { href: '/report', icon: FileText, label: 'Reports' },
 ];
 
 type SidebarNavProps = {

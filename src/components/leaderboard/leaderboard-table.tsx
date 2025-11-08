@@ -11,12 +11,19 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Crown } from 'lucide-react';
-import { districts } from '@/lib/data';
-import type { Record as PerformanceRecord } from '@/lib/types';
+import { districts, categoryLabels } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
 import { useCollection } from '@/hooks/use-collection';
 import { collection, query } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
+import { Category } from '@/lib/types';
+
+type ScoreData = {
+    id: number;
+    name: string;
+    score: number;
+} & Record<Category, number>;
+
 
 export function LeaderboardTable() {
     const firestore = useFirestore();
@@ -26,17 +33,25 @@ export function LeaderboardTable() {
     const leaderboardData = useMemo(() => {
         if (!records) return [];
 
-        const districtScores = new Map<number, { id: number; name: string; score: number; nbw: number; conviction: number; narcotics: number; missing: number }>();
+        const initialCategoryScores: Record<Category, number> = {
+            'NBW': 0,
+            'Conviction': 0,
+            'Narcotics': 0,
+            'Missing Person': 0,
+            'Firearms': 0,
+            'Sand Mining': 0,
+            'Preventive Actions': 0,
+            'Important Detections': 0,
+        };
+
+        const districtScores = new Map<number, ScoreData>();
         
         districts.forEach(district => {
             districtScores.set(district.id, {
                 id: district.id,
                 name: district.name,
                 score: 0,
-                nbw: 0,
-                conviction: 0,
-                narcotics: 0,
-                missing: 0,
+                ...initialCategoryScores
             });
         });
 
@@ -44,23 +59,24 @@ export function LeaderboardTable() {
             const districtData = districtScores.get(record.districtId);
             if (districtData) {
                 districtData.score += record.value;
-                if (record.category === 'NBW') districtData.nbw += record.value;
-                if (record.category === 'Conviction') districtData.conviction += record.value;
-                if (record.category === 'Narcotics') districtData.narcotics += record.value;
-                if (record.category === 'Missing Person') districtData.missing += record.value;
+                const category = record.category as Category;
+                if (category in districtData) {
+                    districtData[category] += record.value;
+                }
             }
         });
 
         return Array.from(districtScores.values())
             .sort((a, b) => b.score - a.score)
-            .slice(0, 5);
     }, [records]);
+    
+    const categories = Object.keys(categoryLabels) as Category[];
 
     return (
         <Card className="rounded-xl shadow-lg">
             <CardHeader>
-                <CardTitle>Top 5 Performing Districts</CardTitle>
-                <CardDescription>Based on overall performance score from live data.</CardDescription>
+                <CardTitle>District Leaderboard</CardTitle>
+                <CardDescription>Based on overall performance score from live data across all categories.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -69,10 +85,9 @@ export function LeaderboardTable() {
                             <TableHead className="w-[80px]">Rank</TableHead>
                             <TableHead>District</TableHead>
                             <TableHead className="text-right">Overall Score</TableHead>
-                            <TableHead className="text-right">NBW</TableHead>
-                            <TableHead className="text-right">Conviction</TableHead>
-                            <TableHead className="text-right">Narcotics</TableHead>
-                            <TableHead className="text-right">Missing Persons</TableHead>
+                            {categories.map(cat => (
+                                <TableHead key={cat} className="text-right">{categoryLabels[cat]}</TableHead>
+                            ))}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -82,10 +97,7 @@ export function LeaderboardTable() {
                                     <TableCell><Skeleton className="h-5 w-10" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    {categories.map(cat => <TableCell key={cat}><Skeleton className="h-5 w-16 ml-auto" /></TableCell>)}
                                 </TableRow>
                             ))
                         ) : (
@@ -99,10 +111,9 @@ export function LeaderboardTable() {
                                     </TableCell>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell className="text-right font-bold text-primary">{item.score.toLocaleString()}</TableCell>
-                                    <TableCell className="text-right">{item.nbw}</TableCell>
-                                    <TableCell className="text-right">{item.conviction}</TableCell>
-                                    <TableCell className="text-right">{item.narcotics}</TableCell>
-                                    <TableCell className="text-right">{item.missing}</TableCell>
+                                    {categories.map(cat => (
+                                        <TableCell key={cat} className="text-right">{item[cat]}</TableCell>
+                                    ))}
                                 </TableRow>
                             ))
                         )}
