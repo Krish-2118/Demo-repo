@@ -45,3 +45,24 @@ export const ExtractDataFromPdfOutputSchema = z.object({
   data: z.array(PerformanceRecordSchema).describe('An array of performance records extracted from the PDF.'),
 });
 export type ExtractDataFromPdfOutput = z.infer<typeof ExtractDataFromPdfOutputSchema>;
+
+
+// Improvement Suggestions Types
+
+const DistrictPerformanceDataSchema = z.object({
+  category: z.string().describe('The performance category label.'),
+  value: z.number().describe('The score or value for that category.'),
+});
+
+export const GenerateImprovementSuggestionsInputSchema = z.object({
+  districtName: z.string().describe('The name of the district needing suggestions.'),
+  performanceData: z
+    .array(DistrictPerformanceDataSchema)
+    .describe('An array of performance metrics for the district, focusing on the lowest-performing areas.'),
+});
+export type GenerateImprovementSuggestionsInput = z.infer<typeof GenerateImprovementSuggestionsInputSchema>;
+
+export const GenerateImprovementSuggestionsOutputSchema = z.object({
+  suggestions: z.array(z.string()).describe('A list of actionable suggestions to improve performance.'),
+});
+export type GenerateImprovementSuggestionsOutput = z.infer<typeof GenerateImprovementSuggestionsOutputSchema>;

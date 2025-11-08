@@ -8,25 +8,13 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { 
+    GenerateImprovementSuggestionsInputSchema, 
+    GenerateImprovementSuggestionsOutputSchema,
+    type GenerateImprovementSuggestionsInput,
+    type GenerateImprovementSuggestionsOutput
+} from '@/lib/types';
 
-const DistrictPerformanceDataSchema = z.object({
-  category: z.string().describe('The performance category label.'),
-  value: z.number().describe('The score or value for that category.'),
-});
-
-export const GenerateImprovementSuggestionsInputSchema = z.object({
-  districtName: z.string().describe('The name of the district needing suggestions.'),
-  performanceData: z
-    .array(DistrictPerformanceDataSchema)
-    .describe('An array of performance metrics for the district, focusing on the lowest-performing areas.'),
-});
-export type GenerateImprovementSuggestionsInput = z.infer<typeof GenerateImprovementSuggestionsInputSchema>;
-
-export const GenerateImprovementSuggestionsOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('A list of actionable suggestions to improve performance.'),
-});
-export type GenerateImprovementSuggestionsOutput = z.infer<typeof GenerateImprovementSuggestionsOutputSchema>;
 
 export async function generateImprovementSuggestions(input: GenerateImprovementSuggestionsInput): Promise<GenerateImprovementSuggestionsOutput> {
   return generateImprovementSuggestionsFlow(input);
