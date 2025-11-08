@@ -12,18 +12,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { cn } from '@/lib/utils';
 import { Crown } from 'lucide-react';
 import { districts } from '@/lib/data';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Record as PerformanceRecord } from '@/lib/types';
-import { collection } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 
+const generateMockData = (): PerformanceRecord[] => {
+    const data: PerformanceRecord[] = [];
+    let idCounter = 0;
+    for (const district of districts) {
+        for (const category of ['NBW', 'Conviction', 'Narcotics', 'Missing Person']) {
+             data.push({
+                id: (idCounter++).toString(),
+                districtId: district.id,
+                category: category as any,
+                value: Math.floor(Math.random() * 100) + 1,
+                date: new Date(),
+            });
+        }
+    }
+    return data;
+}
+
 export function LeaderboardTable() {
-    const firestore = useFirestore();
-    const recordsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return collection(firestore, 'records');
-    }, [firestore]);
-    const { data: records, isLoading } = useCollection<PerformanceRecord>(recordsQuery);
+    const records = useMemo(() => generateMockData(), []);
+    const isLoading = false;
 
     const leaderboardData = useMemo(() => {
         if (!records) return [];

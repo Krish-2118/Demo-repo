@@ -6,13 +6,11 @@ import { DistrictComparisonChart } from '@/components/dashboard/district-compari
 import { TrendChart } from '@/components/dashboard/trend-chart';
 import { Box, Target, Trophy, UserCheck } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
-import { useCollection, useMemoFirebase } from '@/firebase';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
 import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns';
+
 
 const iconMap: Record<Category, React.ReactNode> = {
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
@@ -21,25 +19,28 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Missing Person': <UserCheck className="h-4 w-4 text-muted-foreground" />,
 };
 
-// Helper to safely convert Firestore Timestamp or string to Date
-const toDate = (date: any): Date => {
-  if (date instanceof Timestamp) {
-    return date.toDate();
-  }
-  if (typeof date === 'string') {
-    return new Date(date);
-  }
-  if (date && typeof date.toDate === 'function') {
-    return date.toDate();
-  }
-  // Fallback for other potential types or null/undefined
-  return new Date();
-};
+const generateMockData = (dateRange: DateRange): PerformanceRecord[] => {
+    const data: PerformanceRecord[] = [];
+    const categories: Category[] = ['NBW', 'Conviction', 'Narcotics', 'Missing Person'];
+    let idCounter = 0;
 
+    if (!dateRange.from) return [];
+
+    for (const district of districts) {
+        for (const category of categories) {
+            data.push({
+                id: (idCounter++).toString(),
+                districtId: district.id,
+                category: category,
+                value: Math.floor(Math.random() * 100) + 1,
+                date: dateRange.from,
+            });
+        }
+    }
+    return data;
+}
 
 export default function DashboardPage() {
-  const firestore = useFirestore();
-  
   const [filters, setFilters] = useState({
     district: 'all',
     category: 'all' as Category | 'all',
@@ -49,22 +50,11 @@ export default function DashboardPage() {
     } as DateRange,
   });
 
-  const recordsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    let q = collection(firestore, 'records');
-
-    if (filters.dateRange.from && filters.dateRange.to) {
-        const start = Timestamp.fromDate(filters.dateRange.from);
-        const end = Timestamp.fromDate(filters.dateRange.to);
-        return query(q, where('date', '>=', start), where('date', '<=', end));
-    }
-    return collection(firestore, 'records');
-  }, [firestore, filters.dateRange]);
-  
-  const { data: records, isLoading: recordsLoading } = useCollection<PerformanceRecord>(recordsQuery);
+  const records = useMemo(() => generateMockData(filters.dateRange), [filters.dateRange]);
+  const recordsLoading = false;
 
   const previousMonthDateRange = useMemo(() => {
-    if (!filters.dateRange.from) return { from: null, to: null };
+    if (!filters.dateRange.from) return { from: undefined, to: undefined };
     const prevMonth = subMonths(filters.dateRange.from, 1);
     return {
       from: startOfMonth(prevMonth),
@@ -72,14 +62,7 @@ export default function DashboardPage() {
     }
   }, [filters.dateRange.from]);
 
-  const prevRecordsQuery = useMemoFirebase(() => {
-    if (!firestore || !previousMonthDateRange.from || !previousMonthDateRange.to) return null;
-    const start = Timestamp.fromDate(previousMonthDateRange.from);
-    const end = Timestamp.fromDate(previousMonthDateRange.to);
-    return query(collection(firestore, 'records'), where('date', '>=', start), where('date', '<=', end));
-  }, [firestore, previousMonthDateRange]);
-
-  const { data: prevRecords } = useCollection<PerformanceRecord>(prevRecordsQuery);
+  const prevRecords = useMemo(() => generateMockData(previousMonthDateRange), [previousMonthDateRange]);
 
   const filteredRecords = useMemo(() => {
     if (!records) return [];
@@ -139,17 +122,20 @@ export default function DashboardPage() {
     if (!records) return [];
     const trendMap = new Map<string, any>();
 
-    records.forEach(record => {
-      const recordDate = toDate(record.date);
-      const month = format(recordDate, 'MMM yyyy');
-      if (!trendMap.has(month)) {
-        trendMap.set(month, { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 });
-      }
-      const monthData = trendMap.get(month);
-      monthData[record.category] = (monthData[record.category] || 0) + record.value;
-    });
+    const threeMonthsAgo = subMonths(new Date(), 3);
 
-    return Array.from(trendMap.values()).sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+    for (let i = 0; i < 4; i++) {
+        const date = startOfMonth(subMonths(new Date(), 3 - i));
+        const month = format(date, 'MMM yyyy');
+        const monthData: any = { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 };
+        
+        ['NBW', 'Conviction', 'Narcotics', 'Missing Person'].forEach(cat => {
+            monthData[cat] = Math.floor(Math.random() * 400) + 50;
+        });
+        trendMap.set(month, monthData);
+    }
+
+    return Array.from(trendMap.values());
 
   }, [records]);
 

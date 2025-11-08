@@ -29,7 +29,7 @@ export function FileUploader() {
                     const binaryStr = event.target?.result;
                     if (!binaryStr) throw new Error("File content is empty");
 
-                    const workbook = XLSX.read(binaryStr, { type: 'binary' });
+                    const workbook = XLSX.read(binaryStr, { type: 'binary', cellDates: true });
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, {

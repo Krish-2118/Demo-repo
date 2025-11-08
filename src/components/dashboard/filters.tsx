@@ -24,7 +24,6 @@ import {
 import { districts, categoryLabels } from '@/lib/data';
 import type { Category, Record } from '@/lib/types';
 import { useTransition } from 'react';
-import { Timestamp } from 'firebase/firestore';
 
 type FiltersProps = {
   onFilterChange: (filters: {
@@ -59,17 +58,11 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   const handleExport = () => {
     startTransition(() => {
         const dataToExport = allRecords.map(record => {
-            let recordDate: Date;
-            if (record.date instanceof Timestamp) {
-                recordDate = record.date.toDate();
-            } else {
-                recordDate = new Date(record.date);
-            }
             return {
                 District: districts.find(d => d.id === record.districtId)?.name || 'Unknown',
                 Category: record.category,
                 Value: record.value,
-                Date: format(recordDate, 'yyyy-MM-dd')
+                Date: record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
             }
         });
 
