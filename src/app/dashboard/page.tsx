@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import { Filters } from '@/components/dashboard/filters';
@@ -9,7 +10,7 @@ import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
-import { subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { subMonths, startOfMonth, endOfMonth, isWithinInterval, endOfDay } from 'date-fns';
 import { useCollection } from '@/hooks/use-collection';
 import { collection, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
@@ -111,9 +112,12 @@ export default function DashboardPage() {
       const isDistrictMatch = filters.district === 'all' || r.districtId === selectedDistrictId;
       const isCategoryMatch = filters.category === 'all' || r.category === filters.category;
       
-      const isDateInRange = filters.dateRange.from && filters.dateRange.to && r.date instanceof Date 
-        ? isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to })
-        : true; // If no date range is set, include all dates
+      const isDateInRange = filters.dateRange.from && r.date instanceof Date
+        ? isWithinInterval(r.date, { 
+            start: filters.dateRange.from, 
+            end: endOfDay(filters.dateRange.to || filters.dateRange.from) 
+          })
+        : true; 
 
       return isDistrictMatch && isCategoryMatch && isDateInRange;
     });
@@ -257,3 +261,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
