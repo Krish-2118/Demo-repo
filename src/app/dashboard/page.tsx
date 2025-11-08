@@ -24,11 +24,17 @@ const iconMap: Record<Category, React.ReactNode> = {
 // This function converts Firestore Timestamps to Date objects
 const processRecords = (records: any[] | null): PerformanceRecord[] => {
     if (!records) return [];
-    return records.map(r => ({
-        ...r,
-        id: r.id,
-        date: r.date.toDate(),
-    }));
+    return records.map(r => {
+        let date = r.date;
+        if (date && typeof date.toDate === 'function') {
+            date = date.toDate();
+        }
+        return {
+            ...r,
+            id: r.id,
+            date: date as Date,
+        };
+    });
 };
 
 export default function DashboardPage() {
@@ -60,14 +66,14 @@ export default function DashboardPage() {
     return processedRecords.filter(r => 
       (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
       (filters.category === 'all' || r.category === filters.category) &&
-      (filters.dateRange.from && filters.dateRange.to && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
+      (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
     );
   }, [processedRecords, filters.district, filters.category, filters.dateRange]);
 
   const prevMonthRecords = useMemo(() => {
      if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
      return processedRecords.filter(r => 
-       isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
+       r.date instanceof Date && isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
      );
   }, [processedRecords, previousMonthDateRange]);
 
@@ -128,7 +134,7 @@ export default function DashboardPage() {
 
     // Filter records for the last 6 months
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
-    const relevantRecords = processedRecords.filter(r => r.date >= sixMonthsAgo);
+    const relevantRecords = processedRecords.filter(r => r.date instanceof Date && r.date >= sixMonthsAgo);
 
     // Aggregate data
     relevantRecords.forEach(record => {
