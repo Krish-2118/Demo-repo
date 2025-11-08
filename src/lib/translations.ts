@@ -63,7 +63,7 @@ export const translations = {
     'Total Cases Solved': 'ମୋଟ ସମାଧାନ ହୋଇଥିବା ମାମଲା',
     'Processing File': 'ଫାଇଲ୍ ପ୍ରକ୍ରିୟାକରଣ କରାଯାଉଛି',
     'Parsing {fileName}...': '{fileName} ପାର୍ସ କରାଯାଉଛି...',
-    'Processing Complete': 'ପ୍ରକ୍ରିୟାକରଣ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା',
+    'Processing Complete': 'ପ੍ਰକ୍ରିୟାକରଣ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା',
     'Please review the data preview below.': 'ଦୟାକରି ନିମ୍ନରେ ଥିବା ଡାଟା ପ୍ରିଭ୍ୟୁ ସମୀକ୍ଷା କରନ୍ତୁ |',
     'Error processing spreadsheet.': 'ସ୍ପ୍ରେଡସିଟ୍ ପ୍ରକ୍ରିୟାକରଣରେ ତ୍ରୁଟି।',
     'Extracting Data from PDF': 'PDF ରୁ ଡାଟା ବାହାର କରାଯାଉଛି',
@@ -92,7 +92,7 @@ export const translations = {
     'Selected file': 'ଚୟନିତ ଫାଇଲ୍',
     'Data Preview': 'ଡାଟା ପ୍ରିଭ୍ୟୁ',
     'A preview of the first few rows from your uploaded file will appear here once processed.': 'ଆପଣଙ୍କ ଅପଲੋડ୍ ହୋଇଥିବା ଫାଇଲରୁ ପ୍ରଥମ କିଛି ଧାଡିର ଏକ ପ୍ରିଭ୍ୟୁ ପ୍ରକ୍ରିୟାକରଣ ପରେ ଏଠାରେ ଦେଖାଯିବ |',
-    'No data processed yet. Upload a file to see the preview.': 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଡାଟା ପ୍ରକ୍ରିୟାକରଣ କରାଯାଇ ନାହିଁ | ପ୍ରିଭ୍ୟୁ ଦେଖିବାକୁ ଏକ ଫାଇଲ୍ ଅପଲୋଡ୍ କରନ୍ତୁ |',
+    'No data processed yet. Upload a file to see the preview.': 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଡାଟା ପ୍ରକ୍ରିୟାକରଣ କରାଯାଇ ନାହିଁ | ପ୍ରିଭ୍ୟୁ ଦେଖିବାକୁ ଏକ ଫାଇଲ୍ ଅପଲੋଡ୍ କରନ୍ତୁ |',
     'A preview of the first 5 rows from your processed file. Please verify before saving.': 'ଆପଣଙ୍କ ପ୍ରକ୍ରିୟାକୃତ ଫାଇଲରୁ ପ୍ରଥମ 5 ଧାଡିର ଏକ ପ୍ରିଭ୍ୟୁ | ଦୟାକରି ସେଭ୍ କରିବା ପୂର୍ବରୁ ଯାଞ୍ଚ କରନ୍ତୁ |',
     'Save Records': 'ରେକର୍ଡ ସେଭ୍ କରନ୍ତୁ',
     'Saving Records...': 'ରେକର୍ଡ ସେଭ୍ କରାଯାଉଛି...',
@@ -124,7 +124,7 @@ export const translations = {
     'Property Crime Cases': 'ସମ୍ପତ୍ତି ଅପରାଧ ମାମଲା',
     'Not enough data to generate an insight. Please select a different date range or district.': 'ଏକ ଇନସାଇଟ୍ ସୃଷ୍ଟି କରିବାକୁ ପର୍ଯ୍ୟାପ୍ତ ଡାଟା ନାହିଁ | ଦୟାକରି ଏକ ଭିନ୍ନ ତାରିଖ ସୀମା କିମ୍ବା ଜିଲ୍ଲା ଚୟନ କରନ୍ତୁ |',
     'Could not generate an AI insight at this time.': 'ଏହି ସମୟରେ ଏକ AI ଇନସାଇଟ୍ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
-    'Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.': 'ଅପଲੋડ୍ ବିଫଳ ହେଲା। ଫାଇଲରେ ସ୍ୱୀକୃତିପ୍ରାପ୍ତ ଜିଲ୍ଲା ଏବଂ ତାରିଖ ସହିତ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ଫାଇଲ୍ ବିଷୟବସ୍ତୁ ଏବଂ ଫର୍ମାଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ।',
+    'Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.': 'ଅପଲੋડ୍ ବିఫଳ ହେଲା। ଫାଇଲରେ ସ୍ୱୀକୃତିପ୍ରାପ୍ତ ଜିଲ୍ଲା ଏବଂ ତାରିଖ ସହିତ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ଫାଇଲ୍ ବିଷୟବସ୍ତୁ ଏବଂ ଫର୍ମାଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ।',
     'Actions': 'କାର୍ଯ୍ୟାନୁଷ୍ଠାନ',
     'Get Suggestions': 'ପରାମର୍ଶ ପାଆନ୍ତୁ',
     'Could not generate suggestions at this time.': 'ଏହି ସମୟରେ ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
@@ -145,12 +145,14 @@ export const translations = {
     'AI could not find any structured data in the text provided.': 'ପ୍ରଦାନ କରାଯାଇଥିବା ପାଠ୍ୟରେ AI କୌଣସି ସଂଗଠିତ ଡାଟା ପାଇଲା ନାହିଁ |',
     'Error processing text.': 'ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣରେ ତ୍ରୁଟି।',
     'Please process some text before saving.': 'ଦୟାକରି ସେଭ୍ କରିବା ପୂର୍ବରୁ କିଛି ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ |',
-    'Upload failed. No valid records were found in the text. Please check the content.': 'ଅପଲੋડ୍ ବିଫଳ ହେଲା। ପାଠ୍ୟରେ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ବିଷୟବସ୍ତୁ ଯାଞ୍ଚ କରନ୍ତୁ।',
+    'Upload failed. No valid records were found in the text. Please check the content.': 'ଅପଲੋડ୍ ବିఫଳ ହେଲା। ପାଠ୍ୟରେ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ବିଷୟବସ୍ତୁ ଯାଞ୍ଚ କରନ୍ତୁ।',
     'Achievements': 'ଉପଲବ୍ଧି',
     'Areas for Improvement': 'ଉନ୍ନତି ପାଇଁ କ୍ଷେତ્ર',
     'Total Convictions': 'ମୋଟ ଦଣ୍ଡବିଧାନ',
     'Solve Rate': 'ସମାଧାନ ହାର',
     'Registered': 'ପଞ୍ଜୀକୃତ',
-    'Solved': 'ସମାଧାନ'
+    'Solved': 'ସମାଧାନ',
+    'Total Cases Registered': 'ମୋଟ ପଞ୍ଜୀକୃତ ମାମଲା',
+    'Overall Score': 'ସାମଗ୍ରିକ ସ୍କୋର'
   }
 };
