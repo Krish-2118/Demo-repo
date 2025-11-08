@@ -175,7 +175,7 @@ export default function DashboardPage() {
         ))}
       </div>
       <div className="grid gap-4">
-        <AiSummary />
+        <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <DistrictComparisonChart data={districtPerformance} isLoading={recordsLoading} />

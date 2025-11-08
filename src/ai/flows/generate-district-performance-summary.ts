@@ -10,17 +10,20 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const KpiMetricSchema = z.object({
+  category: z.string(),
+  label: z.string(),
+  value: z.number(),
+  change: z.number(),
+});
+
 const GenerateDistrictPerformanceSummaryInputSchema = z.object({
-  districtName: z.string().describe('The name of the district.'),
-  category: z.string().describe('The category of performance (e.g., NBW, Conviction, Narcotics, Missing Person).'),
-  value: z.number().describe('The performance value for the district and category.'),
-  date: z.string().describe('The date for the performance data (YYYY-MM).'),
-  improvementPercentage: z.number().optional().describe('The percentage of improvement from the last month, if available.'),
+  kpiData: z.array(KpiMetricSchema).describe('An array of Key Performance Indicator metrics for various categories.'),
 });
 export type GenerateDistrictPerformanceSummaryInput = z.infer<typeof GenerateDistrictPerformanceSummaryInputSchema>;
 
 const GenerateDistrictPerformanceSummaryOutputSchema = z.object({
-  summary: z.string().describe('A readable sentence summarizing the district performance insight.'),
+  summary: z.string().describe('A readable sentence summarizing the overall performance based on the provided KPIs. Highlight the most significant metric (highest value or biggest change).'),
 });
 export type GenerateDistrictPerformanceSummaryOutput = z.infer<typeof GenerateDistrictPerformanceSummaryOutputSchema>;
 
@@ -36,18 +39,19 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateDistrictPerformanceSummaryOutputSchema},
   prompt: `You are an expert data analyst specializing in law enforcement performance.
 
-  Generate a concise, readable sentence summarizing the performance of a police district.
-  Include the district name, category, performance value, date, and any available improvement percentage.
+  Generate a concise, readable, and insightful sentence summarizing the overall performance based on the provided Key Performance Indicators (KPIs).
 
-  District Name: {{{districtName}}}
-  Category: {{{category}}}
-  Value: {{{value}}}
-  Date: {{{date}}}
-  {{#if improvementPercentage}}
-  Improvement: {{{improvementPercentage}}}%
-  {{/if}}
+  Your summary should:
+  1. Briefly mention the overall trend.
+  2. Highlight the most notable metric. This could be the category with the highest value, the most significant positive change, or the most concerning negative change.
+  3. Be insightful and sound like a professional analyst.
 
-  Summary:`,
+  KPI Data:
+  {{#each kpiData}}
+  - Category: {{{label}}}, Value: {{{value}}}, Change from last month: {{{change}}}%
+  {{/each}}
+
+  Based on this data, provide a single, compelling summary sentence.`,
 });
 
 const generateDistrictPerformanceSummaryFlow = ai.defineFlow(
