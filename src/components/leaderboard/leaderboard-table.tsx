@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -33,8 +33,13 @@ const generateMockData = (): PerformanceRecord[] => {
 }
 
 export function LeaderboardTable() {
-    const records = useMemo(() => generateMockData(), []);
-    const isLoading = false;
+    const [records, setRecords] = useState<PerformanceRecord[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setRecords(generateMockData());
+        setIsLoading(false);
+    }, []);
 
     const leaderboardData = useMemo(() => {
         if (!records) return [];
