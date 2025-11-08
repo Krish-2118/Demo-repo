@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
@@ -34,18 +34,21 @@ const processRecords = (records: any[] | null): PerformanceRecord[] => {
             id: r.id,
             date: date as Date,
         };
-    });
+    }).filter(r => r.date instanceof Date && !isNaN(r.date.getTime()));
 };
 
 export default function DashboardPage() {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    district: string;
+    category: Category | 'all';
+    dateRange: DateRange;
+  }>({
     district: 'all',
-    category: 'all' as Category | 'all',
-    dateRange: {
-      from: startOfMonth(new Date()),
-      to: endOfMonth(new Date()),
-    } as DateRange,
+    category: 'all',
+    dateRange: { from: undefined, to: undefined },
   });
+  
+  const [isDateRangeSet, setIsDateRangeSet] = useState(false);
 
   const firestore = useFirestore();
   const recordsQuery = useMemo(() => firestore ? query(collection(firestore, 'records')) : null, [firestore]);
@@ -53,6 +56,20 @@ export default function DashboardPage() {
 
   const processedRecords = useMemo(() => processRecords(allRecords), [allRecords]);
   
+  useEffect(() => {
+    if (processedRecords.length > 0 && !isDateRangeSet) {
+      const dates = processedRecords.map(r => r.date.getTime());
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+      
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        dateRange: { from: minDate, to: maxDate }
+      }));
+      setIsDateRangeSet(true);
+    }
+  }, [processedRecords, isDateRangeSet]);
+
   const previousMonthDateRange = useMemo(() => {
     if (!filters.dateRange.from) return { from: undefined, to: undefined };
     const prevMonth = subMonths(filters.dateRange.from, 1);
