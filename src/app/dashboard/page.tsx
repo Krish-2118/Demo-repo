@@ -4,7 +4,7 @@ import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck } from 'lucide-react';
+import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
@@ -19,6 +19,10 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Conviction': <Trophy className="h-4 w-4 text-muted-foreground" />,
   'Narcotics': <Box className="h-4 w-4 text-muted-foreground" />,
   'Missing Person': <UserCheck className="h-4 w-4 text-muted-foreground" />,
+  'Firearms': <Shield className="h-4 w-4 text-muted-foreground" />,
+  'Sand Mining': <Shovel className="h-4 w-4 text-muted-foreground" />,
+  'Preventive Actions': <Siren className="h-4 w-4 text-muted-foreground" />,
+  'Important Detections': <Search className="h-4 w-4 text-muted-foreground" />,
 };
 
 // This function converts Firestore Timestamps to Date objects
@@ -95,7 +99,7 @@ export default function DashboardPage() {
   }, [processedRecords, previousMonthDateRange]);
 
   const kpiData = useMemo((): PerformanceMetric[] => {
-    const categories: Category[] = ['NBW', 'Conviction', 'Narcotics', 'Missing Person'];
+    const categories: Category[] = Object.keys(categoryLabels) as Category[];
     return categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
@@ -123,7 +127,8 @@ export default function DashboardPage() {
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
-    districts.forEach(d => performanceMap.set(d.name, { name: d.name, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 }));
+    const initialData = { NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
+    districts.forEach(d => performanceMap.set(d.name, { name: d.name, ...initialData }));
 
     filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
@@ -146,7 +151,8 @@ export default function DashboardPage() {
     for (let i = 0; i < 6; i++) {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
         const month = format(date, 'MMM yyyy');
-        trendMap.set(month, { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0 });
+        const initialData = { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
+        trendMap.set(month, initialData);
     }
 
     // Filter records for the last 6 months

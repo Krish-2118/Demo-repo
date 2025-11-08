@@ -6,7 +6,7 @@ export type District = {
   name: string;
 };
 
-export type Category = 'NBW' | 'Conviction' | 'Narcotics' | 'Missing Person';
+export type Category = 'NBW' | 'Conviction' | 'Narcotics' | 'Missing Person' | 'Firearms' | 'Sand Mining' | 'Preventive Actions' | 'Important Detections';
 
 export type Record = {
   id: string;
@@ -36,7 +36,7 @@ export type ExtractDataFromPdfInput = z.infer<typeof ExtractDataFromPdfInputSche
 
 const PerformanceRecordSchema = z.object({
     District: z.string().describe("The name of the police district, e.g., 'Ganjam', 'Cuttack'."),
-    Category: z.string().describe("The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person'."),
+    Category: z.string().describe("The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections'."),
     Value: z.number().describe("The numerical value of the performance metric."),
     Date: z.string().describe("The date of the record in YYYY-MM-DD format."),
 });

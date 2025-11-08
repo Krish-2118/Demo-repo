@@ -14,4 +14,8 @@ export const categoryLabels: Record<Category, string> = {
     'Conviction': 'Conviction Ratio',
     'Narcotics': 'Narcotic Seizures',
     'Missing Person': 'Missing Persons Traced',
+    'Firearms': 'Firearms Seized',
+    'Sand Mining': 'Illegal Sand Mining Cases',
+    'Preventive Actions': 'Preventive Actions Taken',
+    'Important Detections': 'Important Detections',
 };
