@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from '@/context/translation-context';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -17,11 +18,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+  const { t } = useTranslation();
   return (
     <aside
       className={cn(
         'relative hidden h-full flex-col border-r bg-background md:flex transition-all duration-300',
-        isCollapsed ? 'w-20' : 'w-60'
+        isCollapsed ? 'w-[80px]' : 'w-[240px]'
       )}
     >
       <div
@@ -37,7 +39,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             isCollapsed && 'justify-center'
           )}
         >
-          <span className={cn(isCollapsed && 'hidden')}>DistrictEye</span>
+          <span className={cn(isCollapsed && 'hidden')}>{t('DistrictEye')}</span>
         </Link>
         <TooltipProvider>
             <Tooltip>
@@ -67,8 +69,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="flex-1 overflow-auto py-2">
         <nav
           className={cn(
-            'grid items-start px-2 text-sm font-medium lg:px-4',
-            isCollapsed && 'px-2'
+            'grid items-start text-sm font-medium',
+            isCollapsed ? 'px-2' : 'px-4'
           )}
         >
           <SidebarNav isCollapsed={isCollapsed} />
@@ -77,5 +79,3 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     </aside>
   );
 }
-
-    

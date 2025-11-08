@@ -80,7 +80,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
 
 
   React.useEffect(() => {
-    onFilterChange({ district, category, dateRange: date || {} });
+    onFilterChange({ district, category, dateRange: date || {from: undefined, to: undefined} });
   }, [district, category, date, onFilterChange]);
 
 
