@@ -7,7 +7,7 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { FirebaseClientProvider } from '@/firebase/client';
 import { TranslationProvider } from '@/context/translation-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -18,6 +18,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -33,10 +38,12 @@ export default function RootLayout({
                 'grid min-h-screen w-full md:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr]'
               )}
             >
-              <Sidebar
-                isCollapsed={isSidebarCollapsed}
-                onToggle={toggleSidebar}
-              />
+              {isClient && (
+                <Sidebar
+                  isCollapsed={isSidebarCollapsed}
+                  onToggle={toggleSidebar}
+                />
+              )}
               <div className="flex flex-col">
                 <Header />
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
