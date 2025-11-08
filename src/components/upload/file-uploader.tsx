@@ -5,11 +5,11 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { parsePdf } from '@/app/actions';
 import { DataPreview } from './data-preview';
 import { useFirestore } from '@/firebase/client';
 import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
 import { districts } from '@/lib/data';
+import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
 
 async function uploadPerformanceData(firestore: any, data: any[]) {
     const recordsCollection = collection(firestore, 'records');
@@ -119,16 +119,13 @@ export function FileUploader() {
                     const dataUrl = event.target?.result as string;
                     if (!dataUrl) throw new Error("Could not read PDF file.");
                     
-                    // The parsePdf function from actions.ts needs to be replaced or moved
-                    // For now, let's assume it's available or we call the flow directly
-                    // This will be fixed in a subsequent step.
-                    // const result = await parsePdf(dataUrl); 
-                    // For now, let's show an error until we implement the client-side call
-                     toast({
-                        title: 'PDF Parsing not implemented on client',
-                        description: 'Please upload a CSV or XLSX file.',
-                        variant: 'destructive'
+                    const result = await extractDataFromPdf({ pdfDataUri: dataUrl });
+                    setParsedData(result.data);
+                    toast({
+                        title: 'PDF Processing Complete',
+                        description: 'Please review the extracted data preview below.',
                     });
+
                 } catch (error) {
                     handleError(error, 'Error processing PDF.');
                 }
