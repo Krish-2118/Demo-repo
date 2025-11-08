@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { generateImprovementSuggestions } from '@/ai/flows/generate-improvement-suggestions';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 
 type ScoreData = {
     id: number;
@@ -148,51 +149,52 @@ export function LeaderboardTable() {
                 <CardDescription>{t('Based on overall performance score from live data across all categories.')}</CardDescription>
             </CardHeader>
             <CardContent>
+              <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[80px]">{t('Rank')}</TableHead>
-                            <TableHead>{t('District')}</TableHead>
+                            <TableHead className="w-[80px] sticky left-0 bg-background">{t('Rank')}</TableHead>
+                            <TableHead className="sticky left-[80px] bg-background">{t('District')}</TableHead>
                             {translatedCategories.map(cat => (
                                 <TableHead key={cat.key} className="text-right whitespace-nowrap">{cat.label}</TableHead>
                             ))}
-                            <TableHead className="text-right font-bold">{t('Overall Score')}</TableHead>
-                            <TableHead className="text-center">{t('Actions')}</TableHead>
+                            <TableHead className="text-right font-bold sticky right-[120px] bg-background">{t('Overall Score')}</TableHead>
+                            <TableHead className="text-center sticky right-0 bg-background">{t('Actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             Array.from({ length: 5 }).map((_, index) => (
                                 <TableRow key={index}>
-                                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell className="sticky left-0 bg-background"><Skeleton className="h-5 w-10" /></TableCell>
+                                    <TableCell className="sticky left-[80px] bg-background"><Skeleton className="h-5 w-24" /></TableCell>
                                     {translatedCategories.map(cat => <TableCell key={cat.key}><Skeleton className="h-5 w-16 ml-auto" /></TableCell>)}
-                                    <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                                    <TableCell><Skeleton className="h-8 w-24 mx-auto" /></TableCell>
+                                    <TableCell className="sticky right-[120px] bg-background"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                                    <TableCell className="sticky right-0 bg-background"><Skeleton className="h-8 w-24 mx-auto" /></TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             leaderboardData.map((item, index) => (
                                 <TableRow key={item.id} className={cn(getRowClass(index))}>
-                                    <TableCell>
+                                    <TableCell className="sticky left-0 bg-inherit">
                                         <div className="flex items-center gap-2">
                                             {getRankIndicator(index)}
                                             <span className="font-medium text-lg">{index + 1}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="font-medium">{item.name}</TableCell>
+                                    <TableCell className="font-medium sticky left-[80px] bg-inherit">{item.name}</TableCell>
                                     {translatedCategories.map(cat => (
                                         <TableCell key={cat.key} className="text-right">{item[cat.label].toLocaleString()}</TableCell>
                                     ))}
-                                    <TableCell className="text-right font-bold text-primary">{item.score.toLocaleString()}</TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-right font-bold text-primary sticky right-[120px] bg-inherit">{item.score.toLocaleString()}</TableCell>
+                                    <TableCell className="text-center sticky right-0 bg-inherit">
                                         {index > 2 && (
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
                                                 onClick={() => handleGetSuggestions(item)} 
                                                 disabled={isGenerating && selectedDistrict?.id === item.id}
-                                                className="w-[200px]"
+                                                className="w-[180px]"
                                             >
                                                 {isGenerating && selectedDistrict?.id === item.id ? 
                                                     <>
@@ -213,6 +215,8 @@ export function LeaderboardTable() {
                         )}
                     </TableBody>
                 </Table>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
             </CardContent>
         </Card>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -12,6 +12,11 @@ import {z} from 'genkit';
 
 const DistrictPerformanceSchema = z.object({
   name: z.string().describe('The name of the district.'),
+  'Cases Registered': z.number(),
+  'Cases Solved': z.number(),
+  'Total Convictions': z.number(),
+  'Heinous Crime Cases': z.number(),
+  'Property Crime Cases': z.number(),
   'NBW Execution': z.number(),
   'Conviction Ratio': z.number(),
   'Narcotic Seizures': z.number(),
@@ -62,6 +67,11 @@ const prompt = ai.definePrompt({
   District Performance Data:
   {{#each districtPerformance}}
   - **District: {{{name}}}**
+    - Cases Registered: {{{json this.['Cases Registered']}}}
+    - Cases Solved: {{{json this.['Cases Solved']}}}
+    - Total Convictions: {{{json this.['Total Convictions']}}}
+    - Heinous Crime Cases: {{{json this.['Heinous Crime Cases']}}}
+    - Property Crime Cases: {{{json this.['Property Crime Cases']}}}
     - NBW Execution: {{{json this.['NBW Execution']}}}
     - Conviction Ratio: {{{json this.['Conviction Ratio']}}}
     - Narcotic Seizures: {{{json this.['Narcotic Seizures']}}}

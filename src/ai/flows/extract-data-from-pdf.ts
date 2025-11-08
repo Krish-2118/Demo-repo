@@ -28,7 +28,7 @@ const prompt = ai.definePrompt({
     The table can have columns like 'District', 'Category', 'Value', and 'Date', but the column names might vary. You must intelligently map the columns to the required output schema.
 
     - The 'District' should be a district name.
-    - The 'Category' must be one of the following: 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'.
+    - The 'Category' must be one of the following: 'Cases Registered', 'Cases Solved', 'Total Convictions', 'Heinous Crime Cases', 'Property Crime Cases', 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'.
     - The 'Value' should be a number.
     - The 'Date' should be formatted as YYYY-MM-DD.
 

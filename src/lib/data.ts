@@ -10,6 +10,11 @@ export const districts: District[] = [
 ];
 
 export const categoryLabels: Record<Category, string> = {
+  'Cases Registered': 'Cases Registered',
+  'Cases Solved': 'Cases Solved',
+  'Total Convictions': 'Total Convictions',
+  'Heinous Crime Cases': 'Heinous Crime Cases',
+  'Property Crime Cases': 'Property Crime Cases',
   NBW: 'NBW Execution',
   Conviction: 'Conviction Ratio',
   Narcotics: 'Narcotic Seizures',

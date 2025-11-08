@@ -4,7 +4,7 @@ import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint, ClipboardList } from 'lucide-react';
+import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint, ClipboardList, FolderOpen, FolderCheck, BadgeCheck, Skull, Building } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
@@ -16,6 +16,11 @@ import { useFirestore } from '@/firebase/client';
 import { useTranslation } from '@/context/translation-context';
 
 const iconMap: Record<Category, React.ReactNode> = {
+  'Cases Registered': <FolderOpen className="h-4 w-4 text-muted-foreground" />,
+  'Cases Solved': <FolderCheck className="h-4 w-4 text-muted-foreground" />,
+  'Total Convictions': <BadgeCheck className="h-4 w-4 text-muted-foreground" />,
+  'Heinous Crime Cases': <Skull className="h-4 w-4 text-muted-foreground" />,
+  'Property Crime Cases': <Building className="h-4 w-4 text-muted-foreground" />,
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
   'Conviction': <Trophy className="h-4 w-4 text-muted-foreground" />,
   'Narcotics': <Box className="h-4 w-4 text-muted-foreground" />,
@@ -119,7 +124,7 @@ export default function DashboardPage() {
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
     
-    return categories.map(category => {
+    const data = categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
@@ -139,19 +144,22 @@ export default function DashboardPage() {
         change: change,
       };
     });
+    return data;
   }, [filteredRecords, prevMonthRecords, t]);
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
-    const initialData: Record<string, number> = {};
-    (Object.keys(categoryLabels) as Category[]).forEach(cat => {
-        initialData[t(categoryLabels[cat])] = 0;
+    
+    districts.forEach(d => {
+        const initialData: Record<string, number> = {};
+        (Object.keys(categoryLabels) as Category[]).forEach(cat => {
+            initialData[t(categoryLabels[cat])] = 0;
+        });
+        performanceMap.set(d.name, { 
+            name: t(d.name), 
+            ...initialData
+        })
     });
-
-    districts.forEach(d => performanceMap.set(d.name, { 
-        name: t(d.name), 
-        ...initialData
-    }));
 
     filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
@@ -212,7 +220,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4">
         <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
             {kpiData.map((metric) => (
                 <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
             ))}

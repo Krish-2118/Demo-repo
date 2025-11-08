@@ -126,7 +126,7 @@ export const translations = {
     'Could not generate suggestions at this time.': 'ଏହି ସମୟରେ ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
     'AI Improvement Suggestions for': 'ପାଇଁ AI ଉନ୍ନତି ପରାମର୍ଶ',
     'Based on the lowest performing categories, here are some actionable recommendations.': 'ସବୁଠାରୁ କମ୍ ପ୍ରଦର୍ଶନ କରୁଥିବା ବର୍ଗଗୁଡିକ ଉପରେ ଆଧାର କରି, ଏଠାରେ କିଛି କାର୍ଯ୍ୟକ୍ଷମ ସୁପାରିଶ ଦିଆଯାଇଛି |',
-    'Generating suggestions...': 'ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଉଛି...',
+    'Generating...': 'ଜେନେରେଟ୍ କରାଯାଉଛି...',
     'Crime Against Women': 'ମହିଳାଙ୍କ ବିରୋଧରେ ଅପରାଧ',
     'Cybercrime': 'ସାଇବର ଅପରାଧ',
     'Road Accidents': 'ସଡକ ଦୁର୍ଘଟଣା',
@@ -143,6 +143,11 @@ export const translations = {
     'Please process some text before saving.': 'ଦୟାକରି ସେଭ୍ କରିବା ପୂର୍ବରୁ କିଛି ପାଠ୍ୟ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ |',
     'Upload failed. No valid records were found in the text. Please check the content.': 'ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ପାଠ୍ୟରେ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ବିଷୟବସ୍ତୁ ଯାଞ୍ଚ କରନ୍ତୁ।',
     'Achievements': 'ଉପଲବ୍ଧି',
-    'Areas for Improvement': 'ଉନ୍ନତି ପାଇଁ କ୍ଷେତ୍ର'
+    'Areas for Improvement': 'ଉନ୍ନତି ପାଇଁ କ୍ଷେତ୍ର',
+    'Cases Registered': 'ପଞ୍ଜୀକୃତ ମାମଲା',
+    'Cases Solved': 'ସମାଧାନ ହୋଇଥିବା ମାମଲା',
+    'Total Convictions': 'ମୋଟ ଦଣ୍ଡବିଧାନ',
+    'Heinous Crime Cases': 'ଜଘନ୍ୟ ଅପରାଧ ମାମଲା',
+    'Property Crime Cases': 'ସମ୍ପତ୍ତି ଅପରାଧ ମାମଲା'
   }
 };
