@@ -1,3 +1,4 @@
+'use client';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -6,27 +7,38 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { FirebaseClientProvider } from '@/firebase/client';
 import { TranslationProvider } from '@/context/translation-context';
+import { useState } from 'react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-
-export const metadata: Metadata = {
-  title: 'DistrictEye',
-  description: 'Smart Analytics Dashboard for Police Good Work Recognition',
-};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.variable} font-sans antialiased h-full`}>
         <FirebaseClientProvider>
           <TranslationProvider>
-            <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
+            <div
+              className={`grid min-h-screen w-full transition-all duration-300 md:grid-cols-[${
+                isSidebarCollapsed ? '80px' : '240px'
+              }_1fr] lg:grid-cols-[${
+                isSidebarCollapsed ? '80px' : '280px'
+              }_1fr]`}
+            >
               <div className="hidden border-r bg-muted/40 md:block">
-                <Sidebar />
+                <Sidebar
+                  isCollapsed={isSidebarCollapsed}
+                  onToggle={toggleSidebar}
+                />
               </div>
               <div className="flex flex-col">
                 <Header />

@@ -1,11 +1,41 @@
 import Link from 'next/link';
 import { SidebarNav } from './sidebar-nav';
+import { Button } from '../ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
-export function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-10 hidden flex-col border-r bg-background sm:flex transition-all duration-300',
+        isCollapsed ? 'w-20' : 'w-60'
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6',
+          isCollapsed && 'justify-center'
+        )}
+      >
+        <Link
+          href="/"
+          className={cn(
+            'flex items-center gap-2 font-semibold',
+            isCollapsed && 'justify-center'
+          )}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -28,13 +58,44 @@ export function Sidebar() {
             <path d="m4.93 17.66 1.41-1.41" />
             <path d="m17.66 4.93 1.41-1.41" />
           </svg>
-          <span className="">DistrictEye</span>
+          <span className={cn(isCollapsed && 'hidden')}>DistrictEye</span>
         </Link>
       </div>
       <div className="flex-1">
-        <nav className="grid items-start px-2 py-4 text-sm font-medium lg:px-4">
-          <SidebarNav />
+        <nav
+          className={cn(
+            'grid items-start px-2 py-4 text-sm font-medium lg:px-4',
+            isCollapsed && 'px-2'
+          )}
+        >
+          <SidebarNav isCollapsed={isCollapsed} />
         </nav>
+      </div>
+      <div className="mt-auto border-t p-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-full"
+                onClick={onToggle}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-5 w-5" />
+                ) : (
+                  <ChevronLeft className="h-5 w-5" />
+                )}
+                <span className="sr-only">
+                  {isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {isCollapsed ? 'Expand' : 'Collapse'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </aside>
   );
