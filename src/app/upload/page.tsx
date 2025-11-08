@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileUploader } from '@/components/upload/file-uploader';
 import { ManualForm } from '@/components/upload/manual-form';
+import { TextUploader } from '@/components/upload/text-uploader';
 import { useTranslation } from '@/context/translation-context';
 
 export default function UploadPage() {
@@ -18,12 +19,16 @@ export default function UploadPage() {
       </div>
 
       <Tabs defaultValue="file-upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
           <TabsTrigger value="file-upload">{t('File Upload')}</TabsTrigger>
+          <TabsTrigger value="text-input">{t('Text Input (AI)')}</TabsTrigger>
           <TabsTrigger value="manual-entry">{t('Manual Entry')}</TabsTrigger>
         </TabsList>
         <TabsContent value="file-upload">
           <FileUploader />
+        </TabsContent>
+        <TabsContent value="text-input">
+          <TextUploader />
         </TabsContent>
         <TabsContent value="manual-entry">
             <ManualForm />

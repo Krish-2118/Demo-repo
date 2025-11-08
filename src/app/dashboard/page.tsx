@@ -4,7 +4,7 @@ import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search } from 'lucide-react';
+import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
@@ -24,6 +24,9 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Sand Mining': <Shovel className="h-4 w-4 text-muted-foreground" />,
   'Preventive Actions': <Siren className="h-4 w-4 text-muted-foreground" />,
   'Important Detections': <Search className="h-4 w-4 text-muted-foreground" />,
+  'Crime Against Women': <HeartHandshake className="h-4 w-4 text-muted-foreground" />,
+  'Cybercrime': <Fingerprint className="h-4 w-4 text-muted-foreground" />,
+  'Road Accidents': <CarFront className="h-4 w-4 text-muted-foreground" />,
 };
 
 // This function converts Firestore Timestamps to Date objects
@@ -139,14 +142,14 @@ export default function DashboardPage() {
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
-    const initialData: Record<Category, number> = {
-        'NBW': 0, 'Conviction': 0, 'Narcotics': 0, 'Missing Person': 0, 'Firearms': 0, 
-        'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
-    };
+    const initialData: Record<string, number> = {};
+    (Object.keys(categoryLabels) as Category[]).forEach(cat => {
+        initialData[t(categoryLabels[cat])] = 0;
+    });
 
     districts.forEach(d => performanceMap.set(d.name, { 
         name: t(d.name), 
-        ...Object.fromEntries(Object.keys(initialData).map(k => [t(categoryLabels[k as Category]), 0]))
+        ...initialData
     }));
 
     filteredRecords.forEach(r => {
@@ -231,5 +234,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -154,7 +154,7 @@ export function LeaderboardTable() {
                             <TableHead className="w-[80px]">{t('Rank')}</TableHead>
                             <TableHead>{t('District')}</TableHead>
                             {translatedCategories.map(cat => (
-                                <TableHead key={cat.key} className="text-right">{cat.label}</TableHead>
+                                <TableHead key={cat.key} className="text-right whitespace-nowrap">{cat.label}</TableHead>
                             ))}
                             <TableHead className="text-right font-bold">{t('Overall Score')}</TableHead>
                             <TableHead className="text-center">{t('Actions')}</TableHead>
@@ -242,5 +242,3 @@ export function LeaderboardTable() {
         </>
     );
 }
-
-    
