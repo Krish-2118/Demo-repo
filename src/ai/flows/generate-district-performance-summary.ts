@@ -26,9 +26,9 @@ const DistrictPerformanceSchema = z.object({
   'Preventive Actions Taken': z.number(),
   'Important Detections': z.number(),
   'Crime Against Women': z.number(),
-  Cybercrime: z.number(),
+  'Cybercrime': z.number(),
   'Road Accidents': z.number(),
-  Others: z.number(),
+  'Others': z.number(),
 }).catchall(z.number());
 
 
