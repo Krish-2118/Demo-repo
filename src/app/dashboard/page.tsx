@@ -9,11 +9,12 @@ import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
-import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval } from 'date-fns';
+import { subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { useCollection } from '@/hooks/use-collection';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
 import { useTranslation } from '@/context/translation-context';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const iconMap: Record<Category, React.ReactNode> = {
   'Cases Registered': <FolderOpen className="h-4 w-4 text-muted-foreground" />,
@@ -220,11 +221,14 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4">
         <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+        <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+          <div className="flex w-max space-x-4 pb-4">
             {kpiData.map((metric) => (
                 <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
             ))}
-        </div>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
         <div className="grid grid-cols-1 gap-4">
           <AiSummary districtPerformance={districtPerformance} isLoading={recordsLoading} />

@@ -29,7 +29,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div
         className={cn(
           'flex h-[60px] items-center border-b px-6',
-          isCollapsed ? 'justify-center' : 'justify-between'
+          isCollapsed ? 'justify-center' : 'justify-start'
         )}
       >
         <Link
@@ -47,7 +47,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className='ml-auto'
+                        className={cn('ml-auto', isCollapsed && 'mx-auto')}
                         onClick={onToggle}
                     >
                         {isCollapsed ? (
