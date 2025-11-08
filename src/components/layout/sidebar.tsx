@@ -26,8 +26,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     >
       <div
         className={cn(
-          'flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6',
-          isCollapsed && 'justify-center'
+          'flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'
         )}
       >
         <Link
@@ -61,6 +60,30 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </svg>
           <span className={cn(isCollapsed && 'hidden')}>DistrictEye</span>
         </Link>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn('ml-auto', isCollapsed && 'mx-auto')}
+                        onClick={onToggle}
+                    >
+                        {isCollapsed ? (
+                        <ChevronRight className="h-5 w-5" />
+                        ) : (
+                        <ChevronLeft className="h-5 w-5" />
+                        )}
+                        <span className="sr-only">
+                        {isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        </span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                {isCollapsed ? 'Expand' : 'Collapse'}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </div>
       <div className="flex-1 overflow-auto py-2">
         <nav
@@ -71,32 +94,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         >
           <SidebarNav isCollapsed={isCollapsed} />
         </nav>
-      </div>
-      <div className="mt-auto border-t p-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-full"
-                onClick={onToggle}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-5 w-5" />
-                ) : (
-                  <ChevronLeft className="h-5 w-5" />
-                )}
-                <span className="sr-only">
-                  {isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                </span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {isCollapsed ? 'Expand' : 'Collapse'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
     </aside>
   );
