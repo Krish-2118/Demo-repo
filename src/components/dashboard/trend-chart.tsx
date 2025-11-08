@@ -50,6 +50,7 @@ export function TrendChart({ data, isLoading }: TrendChartProps) {
             <Line type="monotone" dataKey={t(categoryLabels['Conviction'])} stroke="hsl(var(--chart-2))" strokeWidth={2} name={t(categoryLabels['Conviction'])} />
             <Line type="monotone" dataKey={t(categoryLabels['Narcotics'])} stroke="hsl(var(--chart-3))" strokeWidth={2} name={t(categoryLabels['Narcotics'])} />
             <Line type="monotone" dataKey={t(categoryLabels['Missing Person'])} stroke="hsl(var(--chart-4))" strokeWidth={2} name={t(categoryLabels['Missing Person'])} />
+            <Line type="monotone" dataKey={t(categoryLabels['Others'])} stroke="hsl(var(--chart-5))" strokeWidth={2} name={t(categoryLabels['Others'])} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

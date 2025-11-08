@@ -23,6 +23,7 @@ const DistrictPerformanceSchema = z.object({
   'Crime Against Women': z.number(),
   Cybercrime: z.number(),
   'Road Accidents': z.number(),
+  Others: z.number(),
 }).catchall(z.number());
 
 
@@ -72,6 +73,7 @@ const prompt = ai.definePrompt({
     - Crime Against Women: {{{json this.['Crime Against Women']}}}
     - Cybercrime: {{{json this.Cybercrime}}}
     - Road Accidents: {{{json this.['Road Accidents']}}}
+    - Others: {{{json this.Others}}}
   {{/each}}
   `,
 });

@@ -30,7 +30,7 @@ const prompt = ai.definePrompt({
 
     The text can be informal, like daily reports, emails, or notes. You must intelligently identify and extract the following information for each record:
     - District: The name of the police district.
-    - Category: The performance category. It MUST be one of these values: ${allCategories}.
+    - Category: The performance category. It MUST be one of these values: ${allCategories}. If a category doesn't fit into any of the specific categories, classify it as 'Others'.
     - Value: The numerical value or count for the metric.
     - Date: The date of the record. If the date is not specified for a record, try to infer it from surrounding context (e.g., a date mentioned at the beginning of the report). If no date can be found, use today's date. Format the date as YYYY-MM-DD.
 

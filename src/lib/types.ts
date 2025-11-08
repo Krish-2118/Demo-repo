@@ -17,7 +17,8 @@ export type Category =
   | 'Important Detections'
   | 'Crime Against Women'
   | 'Cybercrime'
-  | 'Road Accidents';
+  | 'Road Accidents'
+  | 'Others';
 
 export type Record = {
   id: string;
@@ -56,7 +57,7 @@ const PerformanceRecordSchema = z.object({
   Category: z
     .string()
     .describe(
-      "The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections'."
+      "The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'."
     ),
   Value: z.number().describe('The numerical value of the performance metric.'),
   Date: z.string().describe('The date of the record in YYYY-MM-DD format.'),

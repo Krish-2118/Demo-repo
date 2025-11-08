@@ -130,6 +130,7 @@ export const translations = {
     'Crime Against Women': 'ମହିଳାଙ୍କ ବିରୋଧରେ ଅପରାଧ',
     'Cybercrime': 'ସାଇବର ଅପରାଧ',
     'Road Accidents': 'ସଡକ ଦୁର୍ଘଟଣା',
+    'Others': 'ଅନ୍ୟାନ୍ୟ',
     'Paste any unstructured text here. For example: \'Ganjam district reported 5 narcotics seizures and 2 important detections on 2023-10-26. Cuttack had 12 NBW executions on the same day.\'': 'ଏଠାରେ ଯେକୌଣସି ଅସଂଗଠିତ ପାଠ୍ୟ ପେଷ୍ଟ କରନ୍ତୁ | ଉଦାହରଣ ସ୍ୱରୂପ: \'ଗଞ୍ଜାମ ଜିଲ୍ଲା ୨୦୨୩-୧୦-୨୬ ରେ ୫ ଟି ନିଶାଦ୍ରବ୍ୟ ଜବତ ଏବଂ ୨ ଟି ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ସନ୍ଧାନ ରିପୋର୍ଟ କରିଛି | ସେହି ଦିନ କଟକରେ ୧୨ ଟି NBW କାର୍ଯ୍ୟକାରିତା ହୋଇଥିଲା |\'',
     'Process with AI': 'AI ସହିତ ପ୍ରକ୍ରିୟାକରଣ କରନ୍ତୁ',
     'Processing with AI...': 'AI ସହିତ ପ୍ରକ୍ରିୟାକରଣ କରାଯାଉଛି...',

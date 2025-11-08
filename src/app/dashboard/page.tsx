@@ -4,7 +4,7 @@ import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint } from 'lucide-react';
+import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint, ClipboardList } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
@@ -27,6 +27,7 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Crime Against Women': <HeartHandshake className="h-4 w-4 text-muted-foreground" />,
   'Cybercrime': <Fingerprint className="h-4 w-4 text-muted-foreground" />,
   'Road Accidents': <CarFront className="h-4 w-4 text-muted-foreground" />,
+  'Others': <ClipboardList className="h-4 w-4 text-muted-foreground" />,
 };
 
 // This function converts Firestore Timestamps to Date objects

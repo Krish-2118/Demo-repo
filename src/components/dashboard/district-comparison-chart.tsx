@@ -50,6 +50,7 @@ export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonC
             <Bar dataKey={t(categoryLabels['Conviction'])} fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Conviction'])} />
             <Bar dataKey={t(categoryLabels['Narcotics'])} fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Narcotics'])} />
             <Bar dataKey={t(categoryLabels['Missing Person'])} fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Missing Person'])} />
+            <Bar dataKey={t(categoryLabels['Others'])} fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Others'])} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

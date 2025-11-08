@@ -21,4 +21,5 @@ export const categoryLabels: Record<Category, string> = {
   'Crime Against Women': 'Crime Against Women',
   Cybercrime: 'Cybercrime',
   'Road Accidents': 'Road Accidents',
+  'Others': 'Others',
 };
