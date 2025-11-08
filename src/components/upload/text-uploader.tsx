@@ -8,7 +8,7 @@ import { useFirestore } from '@/firebase/client';
 import { collection, writeBatch, doc, Timestamp, Firestore } from 'firebase/firestore';
 import { districts } from '@/lib/data';
 import { useTranslation } from '@/context/translation-context';
-import { Textarea } from '../ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '../ui/card';
 import { extractAndStructureData } from '@/ai/flows/extract-and-structure-data';
 
