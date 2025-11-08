@@ -3,6 +3,8 @@
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
+import { useTranslation } from '@/context/translation-context';
+import { categoryLabels } from '@/lib/data';
 
 interface TrendChartProps {
     data: any[];
@@ -10,6 +12,7 @@ interface TrendChartProps {
 }
 
 export function TrendChart({ data, isLoading }: TrendChartProps) {
+    const { t } = useTranslation();
     if (isLoading) {
         return (
             <Card className="rounded-xl shadow-lg">
@@ -26,8 +29,8 @@ export function TrendChart({ data, isLoading }: TrendChartProps) {
   return (
     <Card className="rounded-xl shadow-lg">
       <CardHeader>
-        <CardTitle>Month-wise Trend</CardTitle>
-        <CardDescription>Performance trends over time.</CardDescription>
+        <CardTitle>{t('Month-wise Trend')}</CardTitle>
+        <CardDescription>{t('Performance trends over time.')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
@@ -43,10 +46,10 @@ export function TrendChart({ data, isLoading }: TrendChartProps) {
               }}
             />
             <Legend wrapperStyle={{fontSize: "12px"}} />
-            <Line type="monotone" dataKey="NBW" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-            <Line type="monotone" dataKey="Conviction" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-            <Line type="monotone" dataKey="Narcotics" stroke="hsl(var(--chart-3))" strokeWidth={2} />
-            <Line type="monotone" dataKey="Missing Person" stroke="hsl(var(--chart-4))" strokeWidth={2} />
+            <Line type="monotone" dataKey={t(categoryLabels['NBW'])} stroke="hsl(var(--chart-1))" strokeWidth={2} name={t(categoryLabels['NBW'])} />
+            <Line type="monotone" dataKey={t(categoryLabels['Conviction'])} stroke="hsl(var(--chart-2))" strokeWidth={2} name={t(categoryLabels['Conviction'])} />
+            <Line type="monotone" dataKey={t(categoryLabels['Narcotics'])} stroke="hsl(var(--chart-3))" strokeWidth={2} name={t(categoryLabels['Narcotics'])} />
+            <Line type="monotone" dataKey={t(categoryLabels['Missing Person'])} stroke="hsl(var(--chart-4))" strokeWidth={2} name={t(categoryLabels['Missing Person'])} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

@@ -3,6 +3,8 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
+import { useTranslation } from '@/context/translation-context';
+import { categoryLabels } from '@/lib/data';
 
 interface DistrictComparisonChartProps {
     data: any[];
@@ -10,6 +12,7 @@ interface DistrictComparisonChartProps {
 }
 
 export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonChartProps) {
+  const { t } = useTranslation();
   if (isLoading) {
       return (
         <Card className="rounded-xl shadow-lg">
@@ -26,8 +29,8 @@ export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonC
   return (
     <Card className="rounded-xl shadow-lg">
       <CardHeader>
-        <CardTitle>District-wise Comparison</CardTitle>
-        <CardDescription>Performance across key categories</CardDescription>
+        <CardTitle>{t('District-wise Comparison')}</CardTitle>
+        <CardDescription>{t('Performance across key categories')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
@@ -43,10 +46,10 @@ export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonC
               }}
             />
             <Legend wrapperStyle={{fontSize: "12px"}}/>
-            <Bar dataKey="NBW" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Conviction" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Narcotics" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Missing Person" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey={t(categoryLabels['NBW'])} fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name={t(categoryLabels['NBW'])} />
+            <Bar dataKey={t(categoryLabels['Conviction'])} fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Conviction'])} />
+            <Bar dataKey={t(categoryLabels['Narcotics'])} fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Narcotics'])} />
+            <Bar dataKey={t(categoryLabels['Missing Person'])} fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Missing Person'])} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

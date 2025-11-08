@@ -7,6 +7,7 @@ import { Lightbulb, RefreshCw } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { PerformanceMetric } from '@/lib/types';
+import { useTranslation } from '@/context/translation-context';
 
 interface AiSummaryProps {
   kpiData: PerformanceMetric[];
@@ -16,10 +17,11 @@ interface AiSummaryProps {
 export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
   const [summary, setSummary] = useState('');
   const [isPending, startTransition] = useTransition();
+  const { t } = useTranslation();
 
   const handleGenerateSummary = useCallback(() => {
     if (!kpiData || kpiData.every(d => d.value === 0)) {
-        setSummary('Not enough data to generate an insight. Please select a different date range or district.');
+        setSummary(t('Not enough data to generate an insight. Please select a different date range or district.'));
         return;
     }
     
@@ -29,10 +31,10 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
         setSummary(result.summary);
       } catch (error) {
         console.error('Error generating AI summary:', error);
-        setSummary('Could not generate an AI insight at this time.');
+        setSummary(t('Could not generate an AI insight at this time.'));
       }
     });
-  }, [kpiData]);
+  }, [kpiData, t]);
 
   useEffect(() => {
     // Generate summary when data is loaded and available
@@ -46,7 +48,7 @@ export function AiSummary({ kpiData, isLoading }: AiSummaryProps) {
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg text-primary/90 dark:text-primary-foreground/90">AI Insight Summary</CardTitle>
+          <CardTitle className="text-lg text-primary/90 dark:text-primary-foreground/90">{t('AI Insight Summary')}</CardTitle>
         </div>
         <Button
           variant="ghost"

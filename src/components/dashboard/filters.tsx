@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 import { Calendar as CalendarIcon, Download, Trash2, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
-import { endOfDay } from 'date-fns';
+import { format, endOfDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -46,6 +45,7 @@ import { useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase/client';
 import { collection, query, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
+import { useTranslation } from '@/context/translation-context';
 
 
 type FiltersProps = {
@@ -76,6 +76,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
 
   React.useEffect(() => {
@@ -87,29 +88,29 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
     startExportTransition(() => {
         const dataToExport = allRecords.map(record => {
             return {
-                District: districts.find(d => d.id === record.districtId)?.name || 'Unknown',
-                Category: record.category,
-                Value: record.value,
-                Date: record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
+                [t('District')]: t(districts.find(d => d.id === record.districtId)?.name || 'Unknown'),
+                [t('Category')]: t(record.category),
+                [t('Value')]: record.value,
+                [t('Date')]: record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
             }
         });
 
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "PerformanceData");
-        XLSX.writeFile(workbook, `PolicePerformanceReport_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+        XLSX.utils.book_append_sheet(workbook, worksheet, t("PerformanceData"));
+        XLSX.writeFile(workbook, `${t('PolicePerformanceReport')}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
     });
   };
 
   const handleExportPdf = () => {
     startExportTransition(() => {
         const doc = new jsPDF();
-        const tableColumn = ["District", "Category", "Value", "Date"];
+        const tableColumn = [t("District"), t("Category"), t("Value"), t("Date")];
         const tableRows: any[][] = [];
 
         const dataToExport = allRecords.map(record => ([
-            districts.find(d => d.id === record.districtId)?.name || 'Unknown',
-            record.category,
+            t(districts.find(d => d.id === record.districtId)?.name || 'Unknown'),
+            t(record.category),
             record.value,
             record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
         ]));
@@ -121,15 +122,15 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             body: tableRows,
             startY: 20,
         });
-        doc.text("Police Performance Report", 14, 15);
-        doc.save(`PolicePerformanceReport_${format(new Date(), 'yyyyMMdd')}.pdf`);
+        doc.text(t("Police Performance Report"), 14, 15);
+        doc.save(`${t('PolicePerformanceReport')}_${format(new Date(), 'yyyyMMdd')}.pdf`);
     });
   };
 
   const handleCleanData = () => {
     startCleanTransition(async () => {
         if (!firestore) {
-            toast({ title: 'Error', description: 'Firestore not available.', variant: 'destructive'});
+            toast({ title: t('Error'), description: t('Firestore not available.'), variant: 'destructive'});
             return;
         }
 
@@ -168,7 +169,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                toast({ title: 'No Data Found', description: 'No records match the selected filters.' });
+                toast({ title: t('No Data Found'), description: t('No records match the selected filters.') });
                 return;
             }
 
@@ -179,10 +180,10 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
 
             await batch.commit();
 
-            toast({ title: 'Success', description: `${querySnapshot.size} records have been deleted successfully.` });
+            toast({ title: t('Success'), description: t(`${querySnapshot.size} records have been deleted successfully.`) });
         } catch (error) {
             console.error('Error cleaning data:', error);
-            toast({ title: 'Error', description: 'Failed to clean data. Please try again.', variant: 'destructive' });
+            toast({ title: t('Error'), description: t('Failed to clean data. Please try again.'), variant: 'destructive' });
         } finally {
             setIsCleanConfirmOpen(false);
         }
@@ -190,32 +191,32 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   };
   
   const getCleanConfirmationDescription = () => {
-    let description = 'This will permanently delete ';
+    let description = t('This will permanently delete ');
     const parts = [];
 
     if (district !== 'all') {
       const selectedDistrict = districts.find(d => d.name.toLowerCase() === district);
-      parts.push(`records for the "${selectedDistrict?.name}" district`);
+      parts.push(t('records for the "{districtName}" district', { districtName: t(selectedDistrict?.name || '') }));
     }
 
     if (category !== 'all') {
-      parts.push(`records in the "${categoryLabels[category]}" category`);
+      parts.push(t('records in the "{categoryName}" category', { categoryName: t(categoryLabels[category]) }));
     }
 
     if (date?.from) {
       if (date.to) {
-        parts.push(`between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}`);
+        parts.push(t('between {startDate} and {endDate}', { startDate: format(date.from, 'LLL dd, y'), endDate: format(date.to, 'LLL dd, y') }));
       } else {
-        parts.push(`on ${format(date.from, 'LLL dd, y')}`);
+        parts.push(t('on {date}', { date: format(date.from, 'LLL dd, y') }));
       }
     }
 
     if (parts.length === 0) {
-      return 'This will permanently delete ALL records in the database. This action cannot be undone.';
+      return t('This will permanently delete ALL records in the database. This action cannot be undone.');
     }
 
-    description += parts.join(' and ');
-    description += '. This action cannot be undone.';
+    description += parts.join(t(' and '));
+    description += t('. This action cannot be undone.');
     return description;
   }
 
@@ -225,13 +226,13 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
       <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
         <Select value={district} onValueChange={setDistrict}>
           <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder="Select District" />
+            <SelectValue placeholder={t('Select District')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Districts</SelectItem>
+            <SelectItem value="all">{t('All Districts')}</SelectItem>
             {districts.map((d) => (
               <SelectItem key={d.id} value={d.name.toLowerCase()}>
-                {d.name}
+                {t(d.name)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -239,13 +240,13 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
 
         <Select value={category} onValueChange={(value) => setCategory(value as Category | 'all')}>
           <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Select Category" />
+            <SelectValue placeholder={t('Select Category')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t('All Categories')}</SelectItem>
             {(Object.keys(categoryLabels) as Category[]).map((cat) => (
                <SelectItem key={cat} value={cat}>
-                 {categoryLabels[cat]}
+                 {t(categoryLabels[cat])}
                </SelectItem>
             ))}
           </SelectContent>
@@ -273,7 +274,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
                     format(date.from, 'LLL dd, y')
                   )
                 ) : (
-                  <span>Pick a date</span>
+                  <span>{t('Pick a date')}</span>
                 )}
               </Button>
             </PopoverTrigger>
@@ -295,38 +296,38 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled={isExportPending}>
                     <Download className="mr-2 h-4 w-4" />
-                    {isExportPending ? 'Exporting...' : 'Export'}
+                    {isExportPending ? t('Exporting...') : t('Export')}
                     <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleExportExcel}>
-                    Export as Excel (.xlsx)
+                    {t('Export as Excel (.xlsx)')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPdf}>
-                    Export as PDF (.pdf)
+                    {t('Export as PDF (.pdf)')}
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
 
         <Button onClick={() => setIsCleanConfirmOpen(true)} variant="destructive" disabled={isCleanPending}>
             <Trash2 className="mr-2 h-4 w-4" />
-            {isCleanPending ? 'Cleaning...' : 'Clean Data'}
+            {isCleanPending ? t('Cleaning...') : t('Clean Data')}
         </Button>
       </div>
     </div>
     <AlertDialog open={isCleanConfirmOpen} onOpenChange={setIsCleanConfirmOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
                 <AlertDialogDescription>
                     {getCleanConfirmationDescription()}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleCleanData} className={cn(buttonVariants({variant: 'destructive'}))}>
-                    {isCleanPending ? 'Cleaning...' : 'Yes, delete data'}
+                    {isCleanPending ? t('Cleaning...') : t('Yes, delete data')}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

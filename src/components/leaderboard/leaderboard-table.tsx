@@ -17,41 +17,45 @@ import { useCollection } from '@/hooks/use-collection';
 import { collection, query } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
 import { Category } from '@/lib/types';
+import { useTranslation } from '@/context/translation-context';
 
 type ScoreData = {
     id: number;
     name: string;
     score: number;
-} & Record<Category, number>;
+} & Record<string, number>;
 
 
 export function LeaderboardTable() {
     const firestore = useFirestore();
     const recordsQuery = useMemo(() => firestore ? query(collection(firestore, "records")) : null, [firestore]);
     const { data: records, loading: isLoading } = useCollection(recordsQuery);
+    const { t } = useTranslation();
 
-    const leaderboardData = useMemo(() => {
+    const translatedCategories = useMemo(() => {
+        const cats = Object.keys(categoryLabels) as Category[];
+        return cats.map(cat => ({
+            key: cat,
+            label: t(categoryLabels[cat])
+        }));
+    }, [t]);
+
+    const leaderboardData: ScoreData[] = useMemo(() => {
         if (!records) return [];
-
-        const initialCategoryScores: Record<Category, number> = {
-            'NBW': 0,
-            'Conviction': 0,
-            'Narcotics': 0,
-            'Missing Person': 0,
-            'Firearms': 0,
-            'Sand Mining': 0,
-            'Preventive Actions': 0,
-            'Important Detections': 0,
-        };
 
         const districtScores = new Map<number, ScoreData>();
         
         districts.forEach(district => {
+            const initialScores: Record<string, number> = {};
+            translatedCategories.forEach(cat => {
+                initialScores[cat.label] = 0;
+            });
+
             districtScores.set(district.id, {
                 id: district.id,
-                name: district.name,
+                name: t(district.name),
                 score: 0,
-                ...initialCategoryScores
+                ...initialScores
             });
         });
 
@@ -59,34 +63,33 @@ export function LeaderboardTable() {
             const districtData = districtScores.get(record.districtId);
             if (districtData) {
                 districtData.score += record.value;
-                const category = record.category as Category;
-                if (category in districtData) {
-                    districtData[category] += record.value;
+                const categoryLabel = t(categoryLabels[record.category as Category]);
+                if (categoryLabel in districtData) {
+                    districtData[categoryLabel] += record.value;
                 }
             }
         });
 
         return Array.from(districtScores.values())
             .sort((a, b) => b.score - a.score)
-    }, [records]);
+    }, [records, t, translatedCategories]);
     
-    const categories = Object.keys(categoryLabels) as Category[];
 
     return (
         <Card className="rounded-xl shadow-lg">
             <CardHeader>
-                <CardTitle>District Leaderboard</CardTitle>
-                <CardDescription>Based on overall performance score from live data across all categories.</CardDescription>
+                <CardTitle>{t('District Leaderboard')}</CardTitle>
+                <CardDescription>{t('Based on overall performance score from live data across all categories.')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[80px]">Rank</TableHead>
-                            <TableHead>District</TableHead>
-                            <TableHead className="text-right">Overall Score</TableHead>
-                            {categories.map(cat => (
-                                <TableHead key={cat} className="text-right">{categoryLabels[cat]}</TableHead>
+                            <TableHead className="w-[80px]">{t('Rank')}</TableHead>
+                            <TableHead>{t('District')}</TableHead>
+                            <TableHead className="text-right">{t('Overall Score')}</TableHead>
+                            {translatedCategories.map(cat => (
+                                <TableHead key={cat.key} className="text-right">{cat.label}</TableHead>
                             ))}
                         </TableRow>
                     </TableHeader>
@@ -97,7 +100,7 @@ export function LeaderboardTable() {
                                     <TableCell><Skeleton className="h-5 w-10" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                                    {categories.map(cat => <TableCell key={cat}><Skeleton className="h-5 w-16 ml-auto" /></TableCell>)}
+                                    {translatedCategories.map(cat => <TableCell key={cat.key}><Skeleton className="h-5 w-16 ml-auto" /></TableCell>)}
                                 </TableRow>
                             ))
                         ) : (
@@ -111,8 +114,8 @@ export function LeaderboardTable() {
                                     </TableCell>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell className="text-right font-bold text-primary">{item.score.toLocaleString()}</TableCell>
-                                    {categories.map(cat => (
-                                        <TableCell key={cat} className="text-right">{item[cat]}</TableCell>
+                                    {translatedCategories.map(cat => (
+                                        <TableCell key={cat.key} className="text-right">{item[cat.label]}</TableCell>
                                     ))}
                                 </TableRow>
                             ))

@@ -13,6 +13,7 @@ import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval } from 'd
 import { useCollection } from '@/hooks/use-collection';
 import { collection, query, where, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
+import { useTranslation } from '@/context/translation-context';
 
 const iconMap: Record<Category, React.ReactNode> = {
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
@@ -42,6 +43,7 @@ const processRecords = (records: any[] | null): PerformanceRecord[] => {
 };
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [isClient, setIsClient] = useState(false);
   const [filters, setFilters] = useState<{
     district: string;
@@ -99,25 +101,23 @@ export default function DashboardPage() {
 
   const prevMonthRecords = useMemo(() => {
      if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
+     const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
      return processedRecords.filter(r => 
+       (filters.district === 'all' || r.districtId === selectedDistrictId) &&
        r.date instanceof Date && isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
      );
-  }, [processedRecords, previousMonthDateRange]);
+  }, [processedRecords, previousMonthDateRange, filters.district]);
 
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
-    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
-
+    
     return categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
 
       const prevMonthValue = prevMonthRecords
-        .filter(r => 
-            (filters.district === 'all' || (selectedDistrictId && r.districtId === selectedDistrictId)) &&
-            r.category === category
-        )
+        .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
 
       const change = prevMonthValue > 0 
@@ -126,12 +126,12 @@ export default function DashboardPage() {
         
       return {
         category,
-        label: categoryLabels[category],
+        label: t(categoryLabels[category]),
         value: currentMonthValue,
         change: change,
       };
     });
-  }, [filteredRecords, prevMonthRecords, filters.district]);
+  }, [filteredRecords, prevMonthRecords, t]);
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
@@ -140,36 +140,39 @@ export default function DashboardPage() {
         'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
     };
 
-    districts.forEach(d => performanceMap.set(d.name, { 
-        name: d.name, 
-        ...Object.fromEntries(Object.keys(initialData).map(k => [k, 0]))
+    districts.forEach(d => performanceMap.set(t(d.name), { 
+        name: t(d.name), 
+        ...Object.fromEntries(Object.keys(initialData).map(k => [t(categoryLabels[k as Category]), 0]))
     }));
 
     filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
         if (district) {
-            const current = performanceMap.get(district.name);
-            if (current && r.category in initialData) {
-                current[r.category] = (current[r.category] || 0) + r.value;
+            const current = performanceMap.get(t(district.name));
+            const categoryKey = t(categoryLabels[r.category]);
+            if (current && categoryKey in current) {
+                current[categoryKey] = (current[categoryKey] || 0) + r.value;
             }
         }
     });
     return Array.from(performanceMap.values());
-  }, [filteredRecords]);
+  }, [filteredRecords, t]);
 
 
   const trendData = useMemo(() => {
     const trendMap = new Map<string, any>();
-    const selectedDistrictId = districts.find(d => d.name.toLowerCase() === filters.district)?.id;
     
     // Initialize months
+    const monthFormatter = new Intl.DateTimeFormat(t('en-US'), { month: 'short', year: 'numeric' });
+
     for (let i = 0; i < 6; i++) {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
-        const month = format(date, 'MMM yyyy');
-        const initialData = { 
-            month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 
-            'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
-        };
+        const month = monthFormatter.format(date);
+        
+        const initialData: any = { month };
+        (Object.keys(categoryLabels) as Category[]).forEach(cat => {
+            initialData[t(categoryLabels[cat])] = 0;
+        });
         trendMap.set(month, initialData);
     }
 
@@ -179,18 +182,19 @@ export default function DashboardPage() {
 
     // Aggregate data
     relevantRecords.forEach(record => {
-      const month = format(startOfMonth(record.date), 'MMM yyyy');
+      const month = monthFormatter.format(startOfMonth(record.date));
       const monthData = trendMap.get(month);
-      if (monthData && (filters.district === 'all' || (selectedDistrictId && record.districtId === selectedDistrictId))) {
-        if(record.category in monthData){
-            monthData[record.category] += record.value;
+      const categoryKey = t(categoryLabels[record.category]);
+      if (monthData && (filters.district === 'all' || record.districtId === districts.find(d => d.name.toLowerCase() === filters.district)?.id)) {
+        if(categoryKey in monthData){
+            monthData[categoryKey] += record.value;
         }
       }
     });
 
     return Array.from(trendMap.values());
 
-  }, [processedRecords, filters.district]);
+  }, [processedRecords, filters.district, t]);
   
   if (!isClient) {
     return null; // Render nothing on the server

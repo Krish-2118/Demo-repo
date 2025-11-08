@@ -8,12 +8,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-  { href: '/upload', icon: Upload, label: 'Upload Data' },
-];
+import { useTranslation } from '@/context/translation-context';
 
 type SidebarNavProps = {
   isMobile?: boolean;
@@ -21,6 +16,13 @@ type SidebarNavProps = {
 
 export function SidebarNav({ isMobile = false }: SidebarNavProps) {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t('Dashboard') },
+    { href: '/leaderboard', icon: Trophy, label: t('Leaderboard') },
+    { href: '/upload', icon: Upload, label: t('Upload Data') },
+  ];
 
   return (
     <>

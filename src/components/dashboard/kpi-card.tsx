@@ -3,6 +3,7 @@ import type { PerformanceMetric } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { useTranslation } from '@/context/translation-context';
 
 type KpiCardProps = {
   metric: PerformanceMetric;
@@ -11,6 +12,7 @@ type KpiCardProps = {
 };
 
 export function KpiCard({ metric, icon, isLoading }: KpiCardProps) {
+  const { t } = useTranslation();
   const ChangeIcon =
     metric.change > 0
       ? ArrowUpRight
@@ -49,7 +51,7 @@ export function KpiCard({ metric, icon, isLoading }: KpiCardProps) {
           )}
         >
           <ChangeIcon className="h-4 w-4 mr-1" />
-          {Math.abs(metric.change).toFixed(1)}% from last month
+          {Math.abs(metric.change).toFixed(1)}% {t('from last month')}
         </p>
       </CardContent>
     </Card>

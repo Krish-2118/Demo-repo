@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
 import { SidebarNav } from './sidebar-nav';
 import { Input } from '../ui/input';
+import { LanguageSwitcher } from './language-switcher';
 
 export function Header() {
   return (
@@ -58,6 +59,7 @@ export function Header() {
           className="w-full rounded-lg bg-secondary pl-8 md:w-[200px] lg:w-[320px]"
         />
       </div>
+      <LanguageSwitcher />
       <UserNav />
     </header>
   );
