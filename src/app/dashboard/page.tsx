@@ -102,13 +102,21 @@ export default function DashboardPage() {
 
   const filteredRecords = useMemo(() => {
     if (!processedRecords) return [];
-    const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
     
-    return processedRecords.filter(r => 
-      (filters.district === 'all' || r.districtId === selectedDistrictId) &&
-      (filters.category === 'all' || r.category === filters.category) &&
-      (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
-    );
+    const selectedDistrictId = filters.district === 'all' 
+      ? null 
+      : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+
+    return processedRecords.filter(r => {
+      const isDistrictMatch = filters.district === 'all' || r.districtId === selectedDistrictId;
+      const isCategoryMatch = filters.category === 'all' || r.category === filters.category;
+      
+      const isDateInRange = filters.dateRange.from && filters.dateRange.to && r.date instanceof Date 
+        ? isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to })
+        : true; // If no date range is set, include all dates
+
+      return isDistrictMatch && isCategoryMatch && isDateInRange;
+    });
   }, [processedRecords, filters.district, filters.category, filters.dateRange]);
 
   const prevMonthRecords = useMemo(() => {
