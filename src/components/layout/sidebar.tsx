@@ -28,7 +28,7 @@ export function Sidebar() {
             <path d="m4.93 17.66 1.41-1.41" />
             <path d="m17.66 4.93 1.41-1.41" />
           </svg>
-          <span className="">DistrictEye</span>
+          <span className="">Guardians In Action</span>
         </Link>
       </div>
       <div className="flex-1">

@@ -9,7 +9,7 @@ import { FirebaseClientProvider } from '@/firebase/client';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'DistrictEye',
+  title: 'Guardians In Action',
   description: 'Smart Analytics Dashboard for Police Good Work Recognition',
 };
 
