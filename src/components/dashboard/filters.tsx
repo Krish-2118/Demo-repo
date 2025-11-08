@@ -99,35 +99,36 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             return;
         }
 
-        if (category === 'all' && !date?.from) {
-            toast({ title: 'Filter required', description: 'Please select a specific category or a date range to clean data.', variant: 'destructive' });
-            return;
-        }
-
         try {
             const recordsRef = collection(firestore, 'records');
             const queryConstraints = [];
 
+            if (district !== 'all') {
+                const selectedDistrict = districts.find(d => d.name.toLowerCase() === district);
+                if (selectedDistrict) {
+                    queryConstraints.push(where('districtId', '==', selectedDistrict.id));
+                }
+            }
+
             if (category !== 'all') {
                 queryConstraints.push(where('category', '==', category));
             }
+            
             if (date?.from) {
                 // If only `from` is set, treat it as a single-day filter.
-                const endDate = date.to ? date.to : date.from;
+                const endDate = date.to ? endOfDay(date.to) : endOfDay(date.from);
                 queryConstraints.push(where('date', '>=', Timestamp.fromDate(date.from)));
-                queryConstraints.push(where('date', '<=', Timestamp.fromDate(endOfDay(endDate))));
+                queryConstraints.push(where('date', '<=', Timestamp.fromDate(endDate)));
             }
 
-            if (queryConstraints.length === 0) {
-              toast({ title: 'Filter required', description: 'Please select a category or date range to clean data.', variant: 'destructive' });
-              return;
-            }
+            // If no constraints, we query all documents. Otherwise, we apply the filters.
+            const q = queryConstraints.length > 0 ? query(recordsRef, ...queryConstraints) : query(recordsRef);
 
-            const q = query(recordsRef, ...queryConstraints);
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
                 toast({ title: 'No Data Found', description: 'No records match the selected filters.' });
+                setIsCleanConfirmOpen(false);
                 return;
             }
 
@@ -149,20 +150,36 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   };
   
   const getCleanConfirmationDescription = () => {
-    const catDescription = category === 'all' ? 'all records' : `all records in the "${categoryLabels[category]}" category`;
+    const isAllDistricts = district === 'all';
+    const isAllCategories = category === 'all';
+    const hasDateRange = date?.from;
+
+    const districtDescription = isAllDistricts ? 'all districts' : `the "${districts.find(d=>d.name.toLowerCase() === district)?.name}" district`;
+    const categoryDescription = isAllCategories ? 'all categories' : `the "${categoryLabels[category as Category]}" category`;
+
+    let description = 'This will permanently delete records for ';
+
+    if (!isAllDistricts && !isAllCategories && !hasDateRange) {
+      description += `${districtDescription} and ${categoryDescription} across all dates.`
+    } else if (!isAllDistricts && !isAllCategories && hasDateRange) {
+        description += `${districtDescription} and ${categoryDescription}`;
+    } else if (!isAllDistricts && isAllCategories && !hasDateRange) {
+        description += `all categories in ${districtDescription} across all dates.`;
+    } else if (isAllDistricts && !isAllCategories && !hasDateRange) {
+        description += `${categoryDescription} across all districts and dates.`;
+    } else if (isAllDistricts && isAllCategories && !hasDateRange) {
+        return "This will permanently delete ALL data from the database. This action cannot be undone."
+    } else {
+        description += `${isAllCategories ? 'all categories' : categoryDescription} in ${isAllDistricts ? 'all districts' : districtDescription}`;
+    }
     
-    let dateDescription = "across all dates";
     if (date?.from && date.to) {
-        dateDescription = `between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}`;
+        description += ` between ${format(date.from, 'LLL dd, y')} and ${format(date.to, 'LLL dd, y')}`;
     } else if (date?.from) {
-        dateDescription = `on ${format(date.from, 'LLL dd, y')}`;
+        description += ` on ${format(date.from, 'LLL dd, y')}`;
     }
-
-    if (category === 'all' && !date?.from) {
-        return "You must select a category or date range to clean data.";
-    }
-
-    return `This will permanently delete ${catDescription} ${dateDescription}. This action cannot be undone.`;
+    
+    return `${description}. This action cannot be undone.`;
   }
 
   return (
@@ -241,7 +258,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             <Download className="mr-2 h-4 w-4" />
             {isExportPending ? 'Exporting...' : 'Export'}
         </Button>
-        <Button onClick={() => setIsCleanConfirmOpen(true)} variant="destructive" disabled={isCleanPending || (category === 'all' && !date?.from)}>
+        <Button onClick={() => setIsCleanConfirmOpen(true)} variant="destructive" disabled={isCleanPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             {isCleanPending ? 'Cleaning...' : 'Clean Data'}
         </Button>
