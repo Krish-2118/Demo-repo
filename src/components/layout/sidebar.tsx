@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { SidebarNav } from './sidebar-nav';
 import { Button } from '../ui/button';
@@ -19,7 +20,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-10 hidden flex-col border-r bg-background sm:flex transition-all duration-300',
+        'relative hidden h-full flex-col border-r bg-background sm:flex transition-all duration-300',
         isCollapsed ? 'w-20' : 'w-60'
       )}
     >
@@ -61,10 +62,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           <span className={cn(isCollapsed && 'hidden')}>DistrictEye</span>
         </Link>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto py-2">
         <nav
           className={cn(
-            'grid items-start px-2 py-4 text-sm font-medium lg:px-4',
+            'grid items-start px-2 text-sm font-medium lg:px-4',
             isCollapsed && 'px-2'
           )}
         >
