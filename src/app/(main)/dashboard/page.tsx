@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
@@ -49,9 +49,9 @@ export default function DashboardPage() {
       to: endOfMonth(new Date()),
     } as DateRange,
   });
-
-  const records = useMemo(() => generateMockData(filters.dateRange), [filters.dateRange]);
-  const recordsLoading = false;
+  
+  const [records, setRecords] = useState<PerformanceRecord[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(true);
 
   const previousMonthDateRange = useMemo(() => {
     if (!filters.dateRange.from) return { from: undefined, to: undefined };
@@ -62,7 +62,14 @@ export default function DashboardPage() {
     }
   }, [filters.dateRange.from]);
 
-  const prevRecords = useMemo(() => generateMockData(previousMonthDateRange), [previousMonthDateRange]);
+  const [prevRecords, setPrevRecords] = useState<PerformanceRecord[]>([]);
+
+  useEffect(() => {
+    setRecords(generateMockData(filters.dateRange));
+    setPrevRecords(generateMockData(previousMonthDateRange));
+    setRecordsLoading(false);
+  }, [filters.dateRange, previousMonthDateRange]);
+
 
   const filteredRecords = useMemo(() => {
     if (!records) return [];
@@ -121,8 +128,6 @@ export default function DashboardPage() {
   const trendData = useMemo(() => {
     if (!records) return [];
     const trendMap = new Map<string, any>();
-
-    const threeMonthsAgo = subMonths(new Date(), 3);
 
     for (let i = 0; i < 4; i++) {
         const date = startOfMonth(subMonths(new Date(), 3 - i));
