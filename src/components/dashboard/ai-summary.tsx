@@ -25,6 +25,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const [isPending, startTransition] = useTransition();
   const [errorState, setErrorState] = useState<string | null>(null);
   const { t } = useTranslation();
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   const handleGenerateSummary = useCallback(() => {
     const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => d.casesRegistered > 0 || d.casesSolved > 0);
@@ -40,6 +41,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
       try {
         const result = await generateDistrictPerformanceSummary({ districtPerformance });
         setSummary(result);
+        setHasGenerated(true);
       } catch (error) {
         console.error('Error generating AI summary:', error);
         setErrorState(t('Could not generate an AI insight at this time.'));
@@ -49,13 +51,16 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   }, [districtPerformance, t]);
 
   useEffect(() => {
-    if (!isLoading && districtPerformance) {
-      handleGenerateSummary();
+    // Reset summary and error when filters change (indicated by isLoading becoming true)
+    if (isLoading) {
+        setSummary(initialSummaryState);
+        setErrorState(null);
+        setHasGenerated(false);
     }
-  }, [isLoading, districtPerformance, handleGenerateSummary]);
+  }, [isLoading]);
 
   const renderContent = () => {
-    if (isPending || isLoading) {
+    if (isPending) {
       return (
         <div className="space-y-4">
           <Skeleton className="h-4 w-full" />
@@ -73,9 +78,13 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
         </div>
       );
     }
-
+    
     if (errorState) {
         return <p className="text-sm text-destructive">{errorState}</p>;
+    }
+    
+    if (!hasGenerated && !isLoading) {
+        return <p className="text-sm text-muted-foreground">{t('Click the refresh button to generate an AI insight for the current data.')}</p>
     }
     
     return (
