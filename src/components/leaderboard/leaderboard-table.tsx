@@ -1,4 +1,3 @@
-
 'use client';
 import { useMemo, useState, useTransition } from 'react';
 import {
@@ -47,7 +46,7 @@ export function LeaderboardTable() {
     const firestore = useFirestore();
     const recordsQuery = useMemo(() => firestore ? query(collection(firestore, "records")) : null, [firestore]);
     const { data: records, loading: isLoading } = useCollection(recordsQuery);
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { toast } = useToast();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -115,7 +114,8 @@ export function LeaderboardTable() {
                 
                 const result = await generateImprovementSuggestions({
                     districtName: districtData.name,
-                    performanceData: performanceData
+                    performanceData: performanceData,
+                    language: language,
                 });
                 if (result.suggestions) {
                     setSuggestions(result.suggestions);

@@ -23,6 +23,7 @@ const DistrictPerformanceSchema = z.object({
 
 const GenerateDistrictPerformanceSummaryInputSchema = z.object({
   districtPerformance: z.array(DistrictPerformanceSchema).describe('An array of performance data for all categories for a specific district or all districts combined.'),
+  language: z.enum(['en', 'or']).default('en').describe("The language for the AI-generated output. 'en' for English, 'or' for Odia."),
 });
 export type GenerateDistrictPerformanceSummaryInput = z.infer<typeof GenerateDistrictPerformanceSummaryInputSchema>;
 
@@ -46,6 +47,8 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert data analyst for a police department. Your task is to provide a clear, structured, and insightful analysis of the following performance data. The data represents either a single district's performance or an aggregation of all districts.
 
   Your analysis should focus on the 'solveRate' and its change compared to the 'previousSolveRate'.
+
+  IMPORTANT: Generate the entire output in the requested language: {{{language}}}. 'en' is for English, and 'or' is for Odia.
 
   Generate a report with three sections:
   1.  **summary**: A brief, one-paragraph overview of the overall performance. Mention the overall trend in solve rates.

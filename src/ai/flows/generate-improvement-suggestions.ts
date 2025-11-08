@@ -26,6 +26,8 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateImprovementSuggestionsOutputSchema },
   prompt: `You are an expert police performance analyst and consultant. Your task is to provide specific, actionable suggestions for the district of {{{districtName}}} based on their lowest-performing areas.
 
+IMPORTANT: Generate the entire output in the requested language: {{{language}}}. 'en' is for English, and 'or' is for Odia.
+
 The goal is to provide 3-4 concrete recommendations that the district can implement to improve its scores.
 
 Here is the performance data for the district's weakest categories:

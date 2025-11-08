@@ -100,6 +100,7 @@ export const GenerateImprovementSuggestionsInputSchema = z.object({
     .describe(
       'An array of performance metrics for the district, focusing on the lowest-performing areas.'
     ),
+  language: z.enum(['en', 'or']).default('en').describe("The language for the AI-generated output. 'en' for English, 'or' for Odia."),
 });
 export type GenerateImprovementSuggestionsInput = z.infer<
   typeof GenerateImprovementSuggestionsInputSchema

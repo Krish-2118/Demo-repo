@@ -24,7 +24,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const [summary, setSummary] = useState<GenerateDistrictPerformanceSummaryOutput>(initialSummaryState);
   const [isPending, startTransition] = useTransition();
   const [errorState, setErrorState] = useState<string | null>(null);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const handleGenerateSummary = useCallback(() => {
@@ -39,7 +39,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
     startTransition(async () => {
       setErrorState(null);
       try {
-        const result = await generateDistrictPerformanceSummary({ districtPerformance });
+        const result = await generateDistrictPerformanceSummary({ districtPerformance, language });
         setSummary(result);
         setHasGenerated(true);
       } catch (error) {
@@ -48,7 +48,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
         setSummary(initialSummaryState);
       }
     });
-  }, [districtPerformance, t]);
+  }, [districtPerformance, t, language]);
 
   useEffect(() => {
     // Reset summary and error when filters change (indicated by isLoading becoming true)
