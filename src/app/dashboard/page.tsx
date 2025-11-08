@@ -9,7 +9,7 @@ import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
 import type { DateRange } from 'react-day-picker';
-import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval } from 'date-fns';
+import { subMonths, startOfMonth, endOfMonth, format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { useCollection } from '@/hooks/use-collection';
 import { collection, query, where, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
@@ -66,56 +66,64 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (processedRecords.length > 0 && !isDateRangeSet) {
-      const dates = processedRecords.map(r => r.date.getTime());
-      const minDate = new Date(Math.min(...dates));
-      const maxDate = new Date(Math.max(...dates));
-      
-      setFilters(prevFilters => ({
-        ...prevFilters,
-        dateRange: { from: minDate, to: maxDate }
-      }));
-      setIsDateRangeSet(true);
+    if (processedRecords.length > 0 && !isDateRangeSet && !filters.dateRange.from) {
+      const dates = processedRecords.map(r => r.date.getTime()).filter(t => !isNaN(t));
+      if(dates.length > 0) {
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        setFilters(prevFilters => ({
+          ...prevFilters,
+          dateRange: { from: minDate, to: maxDate }
+        }));
+        setIsDateRangeSet(true);
+      }
     }
-  }, [processedRecords, isDateRangeSet]);
-
-  const previousMonthDateRange = useMemo(() => {
-    if (!filters.dateRange.from) return { from: undefined, to: undefined };
-    const prevMonth = subMonths(filters.dateRange.from, 1);
-    return {
-      from: startOfMonth(prevMonth),
-      to: endOfMonth(prevMonth)
-    }
-  }, [filters.dateRange.from]);
+  }, [processedRecords, isDateRangeSet, filters.dateRange.from]);
 
   const filteredRecords = useMemo(() => {
-    return processedRecords.filter(r => 
-      (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
-      (filters.category === 'all' || r.category === filters.category) &&
-      (filters.dateRange.from && filters.dateRange.to && r.date instanceof Date && isWithinInterval(r.date, { start: filters.dateRange.from, end: filters.dateRange.to }))
-    );
-  }, [processedRecords, filters.district, filters.category, filters.dateRange]);
+    return processedRecords.filter(r => {
+      const districtFilterPassed = filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0');
+      const categoryFilterPassed = filters.category === 'all' || r.category === filters.category;
+      
+      let dateFilterPassed = true;
+      if (filters.dateRange.from) {
+          const startDate = startOfDay(filters.dateRange.from);
+          const endDate = filters.dateRange.to ? endOfDay(filters.dateRange.to) : endOfDay(filters.dateRange.from);
+          dateFilterPassed = r.date instanceof Date && isWithinInterval(r.date, { start: startDate, end: endDate });
+      }
 
-  const prevMonthRecords = useMemo(() => {
-     if (!previousMonthDateRange.from || !previousMonthDateRange.to) return [];
-     return processedRecords.filter(r => 
-       r.date instanceof Date && isWithinInterval(r.date, { start: previousMonthDateRange.from!, end: previousMonthDateRange.to! })
-     );
-  }, [processedRecords, previousMonthDateRange]);
+      return districtFilterPassed && categoryFilterPassed && dateFilterPassed;
+    });
+  }, [processedRecords, filters]);
+
 
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
+    
+    // Calculate previous month range based on the start of the current filtered range
+    const previousMonthDateRange = filters.dateRange.from
+      ? {
+          from: startOfMonth(subMonths(filters.dateRange.from, 1)),
+          to: endOfMonth(subMonths(filters.dateRange.from, 1)),
+        }
+      : null;
+
     return categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
 
-      const prevMonthValue = prevMonthRecords
-        .filter(r => 
-            (filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0')) &&
-            r.category === category
-        )
-        .reduce((sum, r) => sum + r.value, 0);
+      let prevMonthValue = 0;
+      if (previousMonthDateRange) {
+        prevMonthValue = processedRecords
+          .filter(r => {
+            const districtFilterPassed = filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0');
+            const categoryFilterPassed = r.category === category;
+            const dateFilterPassed = r.date instanceof Date && isWithinInterval(r.date, previousMonthDateRange);
+            return districtFilterPassed && categoryFilterPassed && dateFilterPassed;
+          })
+          .reduce((sum, r) => sum + r.value, 0);
+      }
 
       const change = prevMonthValue > 0 
         ? ((currentMonthValue - prevMonthValue) / prevMonthValue) * 100 
@@ -128,7 +136,7 @@ export default function DashboardPage() {
         change: change,
       };
     });
-  }, [filteredRecords, prevMonthRecords, filters.district]);
+  }, [filteredRecords, processedRecords, filters.district, filters.dateRange.from]);
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
@@ -159,8 +167,9 @@ export default function DashboardPage() {
     const trendMap = new Map<string, any>();
     
     // Initialize months
+    const trendEndDate = filters.dateRange.to || new Date();
     for (let i = 0; i < 6; i++) {
-        const date = startOfMonth(subMonths(new Date(), 5 - i));
+        const date = startOfMonth(subMonths(trendEndDate, 5 - i));
         const month = format(date, 'MMM yyyy');
         const initialData = { 
             month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 
@@ -169,24 +178,26 @@ export default function DashboardPage() {
         trendMap.set(month, initialData);
     }
 
-    // Filter records for the last 6 months
-    const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
-    const relevantRecords = processedRecords.filter(r => r.date instanceof Date && r.date >= sixMonthsAgo);
+    // Filter records for the relevant 6-month window
+    const sixMonthsAgo = startOfMonth(subMonths(trendEndDate, 5));
+    const relevantRecords = processedRecords.filter(r => {
+        const districtFilterPassed = filters.district === 'all' || r.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0');
+        const dateFilterPassed = r.date instanceof Date && r.date >= sixMonthsAgo && r.date <= trendEndDate;
+        return districtFilterPassed && dateFilterPassed;
+    });
 
     // Aggregate data
     relevantRecords.forEach(record => {
       const month = format(startOfMonth(record.date), 'MMM yyyy');
       const monthData = trendMap.get(month);
-      if (monthData && (filters.district === 'all' || record.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0'))) {
-        if(record.category in monthData){
-            monthData[record.category] += record.value;
-        }
+      if (monthData && (record.category in monthData)) {
+          monthData[record.category] += record.value;
       }
     });
 
     return Array.from(trendMap.values());
 
-  }, [processedRecords, filters.district]);
+  }, [processedRecords, filters.district, filters.dateRange.to]);
   
   if (!isClient) {
     return null; // Render nothing on the server
