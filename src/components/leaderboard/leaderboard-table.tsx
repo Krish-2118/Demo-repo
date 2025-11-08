@@ -16,27 +16,49 @@ import type { Record as PerformanceRecord } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 
 const generateMockData = (): PerformanceRecord[] => {
-    const data: PerformanceRecord[] = [];
-    let idCounter = 0;
-    for (const district of districts) {
-        for (const category of ['NBW', 'Conviction', 'Narcotics', 'Missing Person']) {
-             data.push({
-                id: (idCounter++).toString(),
-                districtId: district.id,
-                category: category as any,
-                value: Math.floor(Math.random() * 100) + 1,
-                date: new Date(),
-            });
-        }
-    }
-    return data;
-}
+  const staticData = [
+    { districtId: 2, category: 'NBW', value: 95 },
+    { districtId: 2, category: 'Conviction', value: 88 },
+    { districtId: 2, category: 'Narcotics', value: 92 },
+    { districtId: 2, category: 'Missing Person', value: 78 },
+    { districtId: 1, category: 'NBW', value: 85 },
+    { districtId: 1, category: 'Conviction', value: 91 },
+    { districtId: 1, category: 'Narcotics', value: 80 },
+    { districtId: 1, category: 'Missing Person', value: 82 },
+    { districtId: 4, category: 'NBW', value: 75 },
+    { districtId: 4, category: 'Conviction', value: 80 },
+    { districtId: 4, category: 'Narcotics', value: 88 },
+    { districtId: 4, category: 'Missing Person', value: 90 },
+    { districtId: 3, category: 'NBW', value: 65 },
+    { districtId: 3, category: 'Conviction', value: 72 },
+    { districtId: 3, category: 'Narcotics', value: 68 },
+    { districtId: 3, category: 'Missing Person', value: 75 },
+    { districtId: 5, category: 'NBW', value: 55 },
+    { districtId: 5, category: 'Conviction', value: 60 },
+    { districtId: 5, category: 'Narcotics', value: 62 },
+    { districtId: 5, category: 'Missing Person', value: 58 },
+    { districtId: 6, category: 'NBW', value: 45 },
+    { districtId: 6, category: 'Conviction', value: 50 },
+    { districtId: 6, category: 'Narcotics', value: 52 },
+    { districtId: 6, category: 'Missing Person', value: 48 },
+  ];
+
+  return staticData.map((item, index) => ({
+    id: (index + 1).toString(),
+    districtId: item.districtId,
+    category: item.category as any,
+    value: item.value,
+    date: new Date(),
+  }));
+};
+
 
 export function LeaderboardTable() {
     const [records, setRecords] = useState<PerformanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Generate mock data on the client side to avoid hydration errors
         setRecords(generateMockData());
         setIsLoading(false);
     }, []);
