@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { generateDistrictPerformanceSummary, type GenerateDistrictPerformanceSummaryOutput } from '@/ai/flows/generate-district-performance-summary';
 import { textToSpeech } from '@/ai/flows/translate-text';
-import { Lightbulb, RefreshCw, CheckCircle, AlertCircle, Volume2, Loader2, PlayCircle } from 'lucide-react';
+import { Lightbulb, RefreshCw, CheckCircle, AlertCircle, Volume2, Loader2, PlayCircle, PauseCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/context/translation-context';
@@ -22,7 +22,7 @@ const initialSummaryState: GenerateDistrictPerformanceSummaryOutput = {
     improvements: [],
 }
 
-type AudioState = 'idle' | 'loading' | 'playing' | 'error';
+type AudioState = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const [summary, setSummary] = useState<GenerateDistrictPerformanceSummaryOutput>(initialSummaryState);
@@ -37,19 +37,21 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const handleGenerateSummary = useCallback(() => {
-    const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => d.casesRegistered > 0 || d.casesSolved > 0);
-
-    if (!hasData) {
-        setErrorState(t('Not enough data to generate an insight. Please select a different date range or district.'));
-        setSummary(initialSummaryState);
-        setHasGenerated(true); // Mark as generated to show the error
-        return;
-    }
-    
     startGeneratingSummary(async () => {
       setErrorState(null);
-      setAudioUrl(null); // Reset audio
+      setAudioUrl(null); 
       setAudioState('idle');
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
+      const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => d.casesRegistered > 0 || d.casesSolved > 0);
+      if (!hasData) {
+          setSummary(initialSummaryState);
+          setHasGenerated(true); 
+          return;
+      }
 
       try {
         const result = await generateDistrictPerformanceSummary({ districtPerformance, language });
@@ -63,30 +65,46 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
     });
   }, [districtPerformance, t, language]);
 
-  const handlePlayAudio = useCallback(async () => {
-    if (!summary.summary) return;
+  const handleAudioPlayback = useCallback(async () => {
+    if (!summary.summary || !hasGenerated) return;
 
-    if (audioUrl) {
-      audioRef.current?.play();
+    if (audioState === 'playing' && audioRef.current) {
+        audioRef.current.pause();
+        setAudioState('paused');
+        return;
+    }
+
+    if (audioState === 'paused' && audioRef.current) {
+        audioRef.current.play();
+        setAudioState('playing');
+        return;
+    }
+
+    // If idle and we have a URL, just play.
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play();
       setAudioState('playing');
       return;
     }
 
-    setAudioState('loading');
-    try {
-      const fullTextToSpeak = `${summary.summary}. ${t('Achievements')}: ${summary.achievements.join('. ')}. ${t('Areas for Improvement')}: ${summary.improvements.join('. ')}`;
-      const result = await textToSpeech({ text: fullTextToSpeak, language });
-      setAudioUrl(result.audioDataUri);
-    } catch (error) {
-        console.error('Error generating audio:', error);
-        toast({
-            title: t('Audio Generation Failed'),
-            description: t('Could not generate audio for the summary.'),
-            variant: 'destructive',
-        });
-        setAudioState('error');
+    // If idle and no URL, generate it.
+    if (audioState === 'idle' || audioState === 'error') {
+        setAudioState('loading');
+        try {
+            const fullTextToSpeak = `${summary.summary}. ${t('Achievements')}: ${summary.achievements.join('. ')}. ${t('Areas for Improvement')}: ${summary.improvements.join('. ')}`;
+            const result = await textToSpeech({ text: fullTextToSpeak, language });
+            setAudioUrl(result.audioDataUri);
+        } catch (error) {
+            console.error('Error generating audio:', error);
+            toast({
+                title: t('Audio Generation Failed'),
+                description: t('Could not generate audio for the summary.'),
+                variant: 'destructive',
+            });
+            setAudioState('error');
+        }
     }
-  }, [summary, audioUrl, language, t, toast]);
+  }, [summary, audioUrl, language, t, toast, audioState, hasGenerated]);
 
 
   useEffect(() => {
@@ -104,8 +122,15 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
         setHasGenerated(false);
         setAudioUrl(null);
         setAudioState('idle');
+         if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+    } else if (!isGeneratingSummary) {
+       // Auto-generate summary when not loading and not already generating
+       // handleGenerateSummary(); //This causes too many requests. User must click refresh.
     }
-  }, [isLoading]);
+  }, [isLoading, isGeneratingSummary]);
   
   const isPending = isGeneratingSummary || isLoading;
 
@@ -132,13 +157,19 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
     if (errorState) {
         return <p className="text-sm text-destructive">{errorState}</p>;
     }
-    
+
+    const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => d.casesRegistered > 0 || d.casesSolved > 0);
+
     if (!hasGenerated && !isLoading) {
         return <p className="text-sm text-muted-foreground">{t('Click the refresh button to generate an AI insight for the current data.')}</p>
     }
     
-    if (!summary.summary && hasGenerated) {
+    if (!summary.summary && hasGenerated && hasData) {
         return <p className="text-sm text-muted-foreground">{t('The AI did not return a summary for the current data.')}</p>
+    }
+
+    if (!hasData && hasGenerated) {
+        return <p className="text-sm text-destructive">{t('Not enough data to generate an insight. Please select a different date range or district.')}</p>;
     }
 
     return (
@@ -164,6 +195,21 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
     );
   }
 
+  const renderAudioIcon = () => {
+    switch (audioState) {
+        case 'loading':
+            return <Loader2 className="h-4 w-4 animate-spin" />;
+        case 'playing':
+            return <PauseCircle className="h-4 w-4" />;
+        case 'paused':
+            return <PlayCircle className="h-4 w-4" />;
+        case 'error':
+            return <Volume2 className="h-4 w-4 text-destructive" />;
+        default:
+            return <Volume2 className="h-4 w-4" />;
+    }
+  }
+
 
   return (
     <Card className="bg-primary/5 dark:bg-primary/10 border-primary/20 rounded-xl shadow-lg">
@@ -177,13 +223,10 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={handlePlayAudio}
-                    disabled={audioState === 'loading' || audioState === 'playing'}
+                    onClick={handleAudioPlayback}
+                    disabled={audioState === 'loading'}
                 >
-                    {audioState === 'loading' && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {audioState === 'playing' && <PlayCircle className="h-4 w-4" />}
-                    {audioState === 'idle' && <Volume2 className="h-4 w-4" />}
-                    {audioState === 'error' && <Volume2 className="h-4 w-4" />}
+                    {renderAudioIcon()}
                 </Button>
             )}
             <Button
@@ -201,7 +244,13 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
       <CardContent>
         {renderContent()}
       </CardContent>
-      <audio ref={audioRef} onEnded={() => setAudioState('idle')} hidden />
+      <audio 
+        ref={audioRef} 
+        onEnded={() => setAudioState('idle')} 
+        onPause={() => { if (audioState === 'playing') setAudioState('paused'); }}
+        onPlay={() => setAudioState('playing')}
+        hidden 
+       />
     </Card>
   );
 }
