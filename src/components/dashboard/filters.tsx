@@ -90,8 +90,9 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
             return {
                 [t('District')]: t(districts.find(d => d.id === record.districtId)?.name || 'Unknown'),
                 [t('Category')]: t(record.category),
-                [t('Value')]: record.value,
-                [t('Date')]: record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
+                [t('Cases Registered')]: record.casesRegistered,
+                [t('Cases Solved')]: record.casesSolved,
+                [t('Date')]: record.date ? format(new Date(record.date as Date), 'yyyy-MM-dd') : ''
             }
         });
 
@@ -105,14 +106,15 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
   const handleExportPdf = () => {
     startExportTransition(() => {
         const doc = new jsPDF();
-        const tableColumn = [t("District"), t("Category"), t("Value"), t("Date")];
+        const tableColumn = [t("District"), t("Category"), t('Cases Registered'), t('Cases Solved'), t("Date")];
         const tableRows: any[][] = [];
 
         const dataToExport = allRecords.map(record => ([
             t(districts.find(d => d.id === record.districtId)?.name || 'Unknown'),
             t(record.category),
-            record.value,
-            record.date ? format(new Date(record.date), 'yyyy-MM-dd') : ''
+            record.casesRegistered,
+            record.casesSolved,
+            record.date ? format(new Date(record.date as Date), 'yyyy-MM-dd') : ''
         ]));
 
         tableRows.push(...dataToExport);
@@ -180,7 +182,7 @@ export function Filters({ onFilterChange, initialFilters, allRecords }: FiltersP
 
             await batch.commit();
 
-            toast({ title: t('Success'), description: t(`${querySnapshot.size} records have been deleted successfully.`) });
+            toast({ title: t('Success'), description: t('{count} records have been deleted successfully.', { count: querySnapshot.size }) });
         } catch (error) {
             console.error('Error cleaning data:', error);
             toast({ title: t('Error'), description: t('Failed to clean data. Please try again.'), variant: 'destructive' });

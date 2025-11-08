@@ -31,7 +31,7 @@ export function DataPreview({ data }: DataPreviewProps) {
         );
     }
     
-    const headers = Object.keys(data[0] || {});
+    const headers = ['District', 'Category', 'Cases Registered', 'Cases Solved', 'Date'];
 
     return (
         <Card className="rounded-xl shadow-lg mt-6">

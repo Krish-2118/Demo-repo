@@ -10,19 +10,16 @@ export const districts: District[] = [
 ];
 
 export const categoryLabels: Record<Category, string> = {
-  'Cases Registered': 'Cases Registered',
-  'Cases Solved': 'Cases Solved',
-  'Total Convictions': 'Total Convictions',
-  'Heinous Crime Cases': 'Heinous Crime Cases',
-  'Property Crime Cases': 'Property Crime Cases',
   'NBW': 'NBW Execution',
-  'Conviction': 'Conviction Ratio',
+  'Conviction': 'Conviction',
   'Narcotics': 'Narcotic Seizures',
   'Missing Person': 'Missing Persons Traced',
   'Firearms': 'Firearms Seized',
   'Sand Mining': 'Illegal Sand Mining Cases',
-  'Preventive Actions': 'Preventive Actions Taken',
+  'Preventive Actions': 'Preventive Actions',
   'Important Detections': 'Important Detections',
+  'Heinous Crime Cases': 'Heinous Crime Cases',
+  'Property Crime Cases': 'Property Crime Cases',
   'Crime Against Women': 'Crime Against Women',
   'Cybercrime': 'Cybercrime',
   'Road Accidents': 'Road Accidents',

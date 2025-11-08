@@ -7,9 +7,10 @@ import { Lightbulb, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/context/translation-context';
+import type { PerformanceMetric } from '@/lib/types';
 
 interface AiSummaryProps {
-  districtPerformance: any[];
+  districtPerformance: PerformanceMetric[];
   isLoading: boolean;
 }
 
@@ -26,7 +27,7 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   const { t } = useTranslation();
 
   const handleGenerateSummary = useCallback(() => {
-    const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => Object.values(d).some(val => typeof val === 'number' && val > 0));
+    const hasData = districtPerformance && districtPerformance.length > 0 && districtPerformance.some(d => d.casesRegistered > 0 || d.casesSolved > 0);
 
     if (!hasData) {
         setErrorState(t('Not enough data to generate an insight. Please select a different date range or district.'));
@@ -48,7 +49,6 @@ export function AiSummary({ districtPerformance, isLoading }: AiSummaryProps) {
   }, [districtPerformance, t]);
 
   useEffect(() => {
-    // Generate summary when data is loaded and available
     if (!isLoading && districtPerformance) {
       handleGenerateSummary();
     }

@@ -4,7 +4,7 @@ import { Filters } from '@/components/dashboard/filters';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { DistrictComparisonChart } from '@/components/dashboard/district-comparison-chart';
 import { TrendChart } from '@/components/dashboard/trend-chart';
-import { Box, Target, Trophy, UserCheck, Shield, Shovel, Siren, Search, CarFront, HeartHandshake, Fingerprint, ClipboardList, FolderOpen, FolderCheck, BadgeCheck, Skull, Building } from 'lucide-react';
+import { Target, Trophy, Box, UserCheck, Shield, Shovel, Siren, Search, Skull, Building, HeartHandshake, Fingerprint, CarFront, ClipboardList } from 'lucide-react';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import type { Record as PerformanceRecord, Category, PerformanceMetric } from '@/lib/types';
 import { districts, categoryLabels } from '@/lib/data';
@@ -14,15 +14,8 @@ import { useCollection } from '@/hooks/use-collection';
 import { collection, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
 import { useTranslation } from '@/context/translation-context';
-import { CaseDetailsGroup } from '@/components/dashboard/case-details-group';
-
 
 const iconMap: Record<Category, React.ReactNode> = {
-  'Cases Registered': <FolderOpen className="h-4 w-4 text-muted-foreground" />,
-  'Cases Solved': <FolderCheck className="h-4 w-4 text-muted-foreground" />,
-  'Total Convictions': <BadgeCheck className="h-4 w-4 text-muted-foreground" />,
-  'Heinous Crime Cases': <Skull className="h-4 w-4 text-muted-foreground" />,
-  'Property Crime Cases': <Building className="h-4 w-4 text-muted-foreground" />,
   'NBW': <Target className="h-4 w-4 text-muted-foreground" />,
   'Conviction': <Trophy className="h-4 w-4 text-muted-foreground" />,
   'Narcotics': <Box className="h-4 w-4 text-muted-foreground" />,
@@ -31,19 +24,13 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Sand Mining': <Shovel className="h-4 w-4 text-muted-foreground" />,
   'Preventive Actions': <Siren className="h-4 w-4 text-muted-foreground" />,
   'Important Detections': <Search className="h-4 w-4 text-muted-foreground" />,
+  'Heinous Crime Cases': <Skull className="h-4 w-4 text-muted-foreground" />,
+  'Property Crime Cases': <Building className="h-4 w-4 text-muted-foreground" />,
   'Crime Against Women': <HeartHandshake className="h-4 w-4 text-muted-foreground" />,
   'Cybercrime': <Fingerprint className="h-4 w-4 text-muted-foreground" />,
   'Road Accidents': <CarFront className="h-4 w-4 text-muted-foreground" />,
   'Others': <ClipboardList className="h-4 w-4 text-muted-foreground" />,
 };
-
-const caseDetailCategories: Category[] = [
-    'Cases Registered',
-    'Cases Solved',
-    'Total Convictions',
-    'Heinous Crime Cases',
-    'Property Crime Cases',
-];
 
 // This function converts Firestore Timestamps to Date objects
 const processRecords = (records: any[] | null): PerformanceRecord[] => {
@@ -57,6 +44,8 @@ const processRecords = (records: any[] | null): PerformanceRecord[] => {
             ...r,
             id: r.id,
             date: date as Date,
+            casesRegistered: r.casesRegistered || 0,
+            casesSolved: r.casesSolved || 0,
         };
     }).filter(r => r.date instanceof Date && !isNaN(r.date.getTime()));
 };
@@ -135,42 +124,43 @@ export default function DashboardPage() {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
     
     return categories.map(category => {
-      const currentMonthValue = filteredRecords
+      const currentRegistered = filteredRecords
         .filter(r => r.category === category)
-        .reduce((sum, r) => sum + r.value, 0);
-
-      const prevMonthValue = prevMonthRecords
+        .reduce((sum, r) => sum + r.casesRegistered, 0);
+      const currentSolved = filteredRecords
         .filter(r => r.category === category)
-        .reduce((sum, r) => sum + r.value, 0);
+        .reduce((sum, r) => sum + r.casesSolved, 0);
+      
+      const prevRegistered = prevMonthRecords
+        .filter(r => r.category === category)
+        .reduce((sum, r) => sum + r.casesRegistered, 0);
+      const prevSolved = prevMonthRecords
+        .filter(r => r.category === category)
+        .reduce((sum, r) => sum + r.casesSolved, 0);
 
-      const change = prevMonthValue > 0 
-        ? ((currentMonthValue - prevMonthValue) / prevMonthValue) * 100 
-        : currentMonthValue > 0 ? 100 : 0;
+      const solveRate = currentRegistered > 0 ? (currentSolved / currentRegistered) * 100 : 0;
+      const previousSolveRate = prevRegistered > 0 ? (prevSolved / prevRegistered) * 100 : 0;
         
       return {
         category,
         label: t(categoryLabels[category]),
-        value: currentMonthValue,
-        change: change,
+        casesRegistered: currentRegistered,
+        casesSolved: currentSolved,
+        solveRate,
+        previousSolveRate,
       };
     });
   }, [filteredRecords, prevMonthRecords, t]);
-  
-  const { caseDetailsKpi, otherKpi } = useMemo(() => {
-    const caseDetailsKpi = kpiData.filter(m => caseDetailCategories.includes(m.category));
-    const otherKpi = kpiData.filter(m => !caseDetailCategories.includes(m.category));
-    return { caseDetailsKpi, otherKpi };
-  }, [kpiData]);
 
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
     
     districts.forEach(d => {
-        const initialData: Record<string, number> = {};
-        (Object.keys(categoryLabels) as Category[]).forEach(cat => {
-            initialData[t(categoryLabels[cat])] = 0;
-        });
+        const initialData: Record<string, number> = {
+          'Cases Registered': 0,
+          'Cases Solved': 0
+        };
         performanceMap.set(d.name, { 
             name: t(d.name), 
             ...initialData
@@ -181,9 +171,9 @@ export default function DashboardPage() {
         const district = districts.find(d => d.id === r.districtId);
         if (district) {
             const current = performanceMap.get(district.name);
-            const categoryKey = t(categoryLabels[r.category]);
-            if (current && categoryKey in current) {
-                current[categoryKey] = (current[categoryKey] || 0) + r.value;
+            if (current) {
+                current['Cases Registered'] += r.casesRegistered;
+                current['Cases Solved'] += r.casesSolved;
             }
         }
     });
@@ -201,32 +191,32 @@ export default function DashboardPage() {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
         const month = monthFormatter.format(date);
         
-        const initialData: any = { month };
-        (Object.keys(categoryLabels) as Category[]).forEach(cat => {
-            initialData[t(categoryLabels[cat])] = 0;
+        trendMap.set(month, { 
+          month,
+          'Cases Registered': 0,
+          'Cases Solved': 0
         });
-        trendMap.set(month, initialData);
     }
 
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
     const relevantRecords = processedRecords.filter(r => r.date instanceof Date && r.date >= sixMonthsAgo);
 
     const selectedDistrictId = filters.district === 'all' ? null : districts.find(d => d.name.toLowerCase() === filters.district)?.id;
+    const selectedCategory = filters.category;
 
     relevantRecords.forEach(record => {
       const month = monthFormatter.format(startOfMonth(record.date));
       const monthData = trendMap.get(month);
-      const categoryKey = t(categoryLabels[record.category]);
-      if (monthData && (filters.district === 'all' || record.districtId === selectedDistrictId)) {
-        if(categoryKey in monthData){
-            monthData[categoryKey] += record.value;
-        }
+
+      if (monthData && (filters.district === 'all' || record.districtId === selectedDistrictId) && (selectedCategory === 'all' || record.category === selectedCategory)) {
+        monthData['Cases Registered'] += record.casesRegistered;
+        monthData['Cases Solved'] += record.casesSolved;
       }
     });
 
     return Array.from(trendMap.values());
 
-  }, [processedRecords, filters.district, t]);
+  }, [processedRecords, filters.district, filters.category, t]);
   
   if (!isClient) {
     return null; // Render nothing on the server
@@ -234,18 +224,16 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 space-y-4">
-      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
+      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={processedRecords ?? []} />
 
-      <CaseDetailsGroup metrics={caseDetailsKpi} iconMap={iconMap} isLoading={recordsLoading} />
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {otherKpi.map((metric) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {kpiData.map((metric) => (
           <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
         ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        <AiSummary districtPerformance={districtPerformance} isLoading={recordsLoading} />
+        <AiSummary districtPerformance={kpiData} isLoading={recordsLoading} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -4,7 +4,6 @@ import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Responsi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { useTranslation } from '@/context/translation-context';
-import { categoryLabels } from '@/lib/data';
 
 interface TrendChartProps {
     data: any[];
@@ -46,11 +45,8 @@ export function TrendChart({ data, isLoading }: TrendChartProps) {
               }}
             />
             <Legend wrapperStyle={{fontSize: "12px"}} />
-            <Line type="monotone" dataKey={t(categoryLabels['NBW'])} stroke="hsl(var(--chart-1))" strokeWidth={2} name={t(categoryLabels['NBW'])} />
-            <Line type="monotone" dataKey={t(categoryLabels['Conviction'])} stroke="hsl(var(--chart-2))" strokeWidth={2} name={t(categoryLabels['Conviction'])} />
-            <Line type="monotone" dataKey={t(categoryLabels['Narcotics'])} stroke="hsl(var(--chart-3))" strokeWidth={2} name={t(categoryLabels['Narcotics'])} />
-            <Line type="monotone" dataKey={t(categoryLabels['Missing Person'])} stroke="hsl(var(--chart-4))" strokeWidth={2} name={t(categoryLabels['Missing Person'])} />
-            <Line type="monotone" dataKey={t(categoryLabels['Others'])} stroke="hsl(var(--chart-5))" strokeWidth={2} name={t(categoryLabels['Others'])} />
+            <Line type="monotone" dataKey={t('Cases Registered')} stroke="hsl(var(--chart-4))" strokeWidth={2} name={t('Cases Registered')} />
+            <Line type="monotone" dataKey={t('Cases Solved')} stroke="hsl(var(--chart-1))" strokeWidth={2} name={t('Cases Solved')} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

@@ -30,10 +30,10 @@ The goal is to provide 3-4 concrete recommendations that the district can implem
 
 Here is the performance data for the district's weakest categories:
 {{#each performanceData}}
-- Category: {{{category}}}, Score: {{{value}}}
+- Category: {{{category}}}, Solve Rate: {{{solveRate}}}%, Cases Registered: {{{casesRegistered}}}, Cases Solved: {{{casesSolved}}}
 {{/each}}
 
-Based on this data, generate a list of practical suggestions. Focus on realistic and impactful actions.`,
+Based on this data, generate a list of practical suggestions. Focus on realistic and impactful actions to improve the solve rate. For example, if 'Cybercrime' has a low solve rate, suggest things like 'specialized training for officers' or 'investing in new forensic software'.`,
 });
 
 const generateImprovementSuggestionsFlow = ai.defineFlow(

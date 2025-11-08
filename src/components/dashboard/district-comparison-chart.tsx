@@ -4,7 +4,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Responsive
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { useTranslation } from '@/context/translation-context';
-import { categoryLabels } from '@/lib/data';
 
 interface DistrictComparisonChartProps {
     data: any[];
@@ -46,11 +45,8 @@ export function DistrictComparisonChart({ data, isLoading }: DistrictComparisonC
               }}
             />
             <Legend wrapperStyle={{fontSize: "12px"}}/>
-            <Bar dataKey={t(categoryLabels['NBW'])} fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name={t(categoryLabels['NBW'])} />
-            <Bar dataKey={t(categoryLabels['Conviction'])} fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Conviction'])} />
-            <Bar dataKey={t(categoryLabels['Narcotics'])} fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Narcotics'])} />
-            <Bar dataKey={t(categoryLabels['Missing Person'])} fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Missing Person'])} />
-            <Bar dataKey={t(categoryLabels['Others'])} fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} name={t(categoryLabels['Others'])} />
+            <Bar dataKey={t('Cases Registered')} fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name={t('Cases Registered')} />
+            <Bar dataKey={t('Cases Solved')} fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name={t('Cases Solved')} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

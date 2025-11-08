@@ -1,7 +1,8 @@
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { PerformanceMetric } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useTranslation } from '@/context/translation-context';
 
@@ -14,11 +15,13 @@ type KpiCardProps = {
 
 export function KpiCard({ metric, icon, isLoading, className }: KpiCardProps) {
   const { t } = useTranslation();
+  const change = metric.solveRate - metric.previousSolveRate;
+  
   const ChangeIcon =
-    metric.change > 0
-      ? ArrowUpRight
-      : metric.change < 0
-      ? ArrowDownRight
+    change > 0
+      ? TrendingUp
+      : change < 0
+      ? TrendingDown
       : Minus;
 
   if (isLoading) {
@@ -28,9 +31,13 @@ export function KpiCard({ metric, icon, isLoading, className }: KpiCardProps) {
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-4 w-4 rounded-full" />
         </CardHeader>
-        <CardContent>
-            <Skeleton className="h-7 w-1/3 mb-2" />
-            <Skeleton className="h-3 w-1/2" />
+        <CardContent className="space-y-2">
+            <Skeleton className="h-7 w-1/3" />
+            <div className="flex justify-between">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-4 w-1/3" />
+            </div>
+             <Skeleton className="h-3 w-1/2" />
         </CardContent>
       </Card>
     );
@@ -43,16 +50,29 @@ export function KpiCard({ metric, icon, isLoading, className }: KpiCardProps) {
         {icon}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{metric.value.toLocaleString()}</div>
+        <div className="text-3xl font-bold">{metric.solveRate.toFixed(1)}%</div>
+        <p className="text-xs text-muted-foreground">{t('Solve Rate')}</p>
+        
+        <div className="mt-2 flex justify-between text-xs">
+            <div className="flex items-center text-green-600">
+                <ArrowUp className="h-3 w-3 mr-1" />
+                <span>{t('Registered')}: {metric.casesRegistered}</span>
+            </div>
+            <div className="flex items-center text-blue-600">
+                <ArrowDown className="h-3 w-3 mr-1" />
+                <span>{t('Solved')}: {metric.casesSolved}</span>
+            </div>
+        </div>
+
         <p
           className={cn(
-            'text-xs text-muted-foreground flex items-center',
-            metric.change > 0 ? 'text-green-600' : 'text-red-600',
-            metric.change === 0 && 'text-muted-foreground'
+            'text-xs text-muted-foreground flex items-center mt-1',
+            change > 0 ? 'text-green-600' : 'text-red-600',
+            change === 0 && 'text-muted-foreground'
           )}
         >
           <ChangeIcon className="h-4 w-4 mr-1" />
-          {Math.abs(metric.change).toFixed(1)}% {t('from last month')}
+          {Math.abs(change).toFixed(1)}% {t('vs last month')}
         </p>
       </CardContent>
     </Card>

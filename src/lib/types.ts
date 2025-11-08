@@ -7,11 +7,6 @@ export type District = {
 };
 
 export type Category =
-  | 'Cases Registered'
-  | 'Cases Solved'
-  | 'Total Convictions'
-  | 'Heinous Crime Cases'
-  | 'Property Crime Cases'
   | 'NBW'
   | 'Conviction'
   | 'Narcotics'
@@ -20,6 +15,8 @@ export type Category =
   | 'Sand Mining'
   | 'Preventive Actions'
   | 'Important Detections'
+  | 'Heinous Crime Cases'
+  | 'Property Crime Cases'
   | 'Crime Against Women'
   | 'Cybercrime'
   | 'Road Accidents'
@@ -29,19 +26,46 @@ export type Record = {
   id: string;
   districtId: number;
   category: Category;
-  value: number;
+  casesRegistered: number;
+  casesSolved: number;
   date: Date | Timestamp;
 };
 
 export type PerformanceMetric = {
   category: Category;
   label: string;
-  value: number;
-  change: number;
+  casesRegistered: number;
+  casesSolved: number;
+  solveRate: number;
+  previousSolveRate: number;
 };
 
-// PDF Extraction Types
+// PDF & Text Extraction Types
+const PerformanceRecordSchema = z.object({
+  District: z
+    .string()
+    .describe(
+      "The name of the police district, e.g., 'Ganjam', 'Cuttack'."
+    ),
+  Category: z
+    .string()
+    .describe(
+      "The performance category, e.g., 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Heinous Crime Cases', 'Property Crime Cases', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'."
+    ),
+  'Cases Registered': z.number().describe('The number of cases registered for that category on a given day.'),
+  'Cases Solved': z.number().describe('The number of cases solved for that category on a given day.'),
+  Date: z.string().describe('The date of the record in YYYY-MM-DD format.'),
+});
 
+export const ExtractDataOutputSchema = z.object({
+  data: z
+    .array(PerformanceRecordSchema)
+    .describe('An array of performance records extracted from the document or text.'),
+});
+export type ExtractDataOutput = z.infer<typeof ExtractDataOutputSchema>;
+
+
+// PDF Input
 export const ExtractDataFromPdfInputSchema = z.object({
   pdfDataUri: z
     .string()
@@ -53,35 +77,20 @@ export type ExtractDataFromPdfInput = z.infer<
   typeof ExtractDataFromPdfInputSchema
 >;
 
-const PerformanceRecordSchema = z.object({
-  District: z
-    .string()
-    .describe(
-      "The name of the police district, e.g., 'Ganjam', 'Cuttack'."
-    ),
-  Category: z
-    .string()
-    .describe(
-      "The performance category, e.g., 'Cases Registered', 'Cases Solved', 'Total Convictions', 'Heinous Crime Cases', 'Property Crime Cases', 'NBW', 'Conviction', 'Narcotics', 'Missing Person', 'Firearms', 'Sand Mining', 'Preventive Actions', 'Important Detections', 'Crime Against Women', 'Cybercrime', 'Road Accidents', 'Others'."
-    ),
-  Value: z.number().describe('The numerical value of the performance metric.'),
-  Date: z.string().describe('The date of the record in YYYY-MM-DD format.'),
-});
 
-export const ExtractDataFromPdfOutputSchema = z.object({
-  data: z
-    .array(PerformanceRecordSchema)
-    .describe('An array of performance records extracted from the PDF.'),
+// Text Input
+export const ExtractAndStructureDataInputSchema = z.object({
+  textInput: z.string().describe('Unstructured text containing performance data.'),
 });
-export type ExtractDataFromPdfOutput = z.infer<
-  typeof ExtractDataFromPdfOutputSchema
->;
+export type ExtractAndStructureDataInput = z.infer<typeof ExtractAndStructureDataInputSchema>;
+
 
 // Improvement Suggestions Types
-
 const DistrictPerformanceDataSchema = z.object({
   category: z.string().describe('The performance category label.'),
-  value: z.number().describe('The score or value for that category.'),
+  solveRate: z.number().describe('The solve rate (from 0 to 100) for that category.'),
+  casesRegistered: z.number().describe('The number of cases registered for that category.'),
+  casesSolved: z.number().describe('The number of cases solved for that category.')
 });
 
 export const GenerateImprovementSuggestionsInputSchema = z.object({
@@ -106,15 +115,3 @@ export const GenerateImprovementSuggestionsOutputSchema = z.object({
 export type GenerateImprovementSuggestionsOutput = z.infer<
   typeof GenerateImprovementSuggestionsOutputSchema
 >;
-
-// Generic Text Extraction Types
-
-export const ExtractAndStructureDataInputSchema = z.object({
-  textInput: z.string().describe('Unstructured text containing performance data.'),
-});
-export type ExtractAndStructureDataInput = z.infer<typeof ExtractAndStructureDataInputSchema>;
-
-export const ExtractAndStructureDataOutputSchema = z.object({
-    data: z.array(PerformanceRecordSchema).describe('An array of performance records extracted from the text.'),
-});
-export type ExtractAndStructureDataOutput = z.infer<typeof ExtractAndStructureDataOutputSchema>;

@@ -22,7 +22,6 @@ async function uploadPerformanceData(firestore: Firestore, data: any[]) {
     let recordsAdded = 0;
 
     for (const row of data) {
-        // Handle both direct properties (from manual entry) and capitalized properties (from file parsing)
         const districtName = (row.District || row.districtName)?.toString().trim().toLowerCase();
         const districtId = row.districtId || districtMap.get(districtName);
 
@@ -53,17 +52,24 @@ async function uploadPerformanceData(firestore: Firestore, data: any[]) {
         }
 
         const category = row.Category || row.category;
-        const value = Number(row.Value || row.value);
+        const casesRegistered = Number(row['Cases Registered'] || row.casesRegistered);
+        const casesSolved = Number(row['Cases Solved'] || row.casesSolved);
 
-        if (!category || isNaN(value)) {
-            console.warn('Invalid category or value, skipping row:', row);
+        if (!category || isNaN(casesRegistered) || isNaN(casesSolved)) {
+            console.warn('Invalid category or values, skipping row:', row);
+            continue;
+        }
+        
+        if (casesSolved > casesRegistered) {
+            console.warn('Cases solved cannot be greater than cases registered, skipping row:', row);
             continue;
         }
 
         const record = {
             districtId: districtId,
             category: category,
-            value: value,
+            casesRegistered: casesRegistered,
+            casesSolved: casesSolved,
             date: Timestamp.fromDate(recordDate),
         };
 
@@ -176,7 +182,7 @@ export function FileUploader() {
         processFile(newFile);
       }
     },
-    [toast, t, processFile]
+    [toast, t] // removed processFile from dependency array to avoid re-creation on every render
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

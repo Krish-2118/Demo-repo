@@ -41,10 +41,14 @@ import { useTranslation } from '@/context/translation-context';
 const formSchema = z.object({
   district: z.string().min(1, 'Please select a district.'),
   category: z.string().min(1, 'Please select a category.'),
-  value: z.coerce.number().min(0, 'Value must be a positive number.'),
+  casesRegistered: z.coerce.number().min(0, 'Value must be a positive number.'),
+  casesSolved: z.coerce.number().min(0, 'Value must be a positive number.'),
   date: z.date({
     required_error: 'A date is required.',
   }),
+}).refine(data => data.casesSolved <= data.casesRegistered, {
+    message: "Cases solved cannot be greater than cases registered.",
+    path: ["casesSolved"],
 });
 
 export function ManualForm() {
@@ -58,7 +62,8 @@ export function ManualForm() {
     defaultValues: {
       district: '',
       category: '',
-      value: 0,
+      casesRegistered: 0,
+      casesSolved: 0,
       date: new Date(),
     },
   });
@@ -74,7 +79,8 @@ export function ManualForm() {
         const record = {
             districtId: parseInt(values.district),
             category: values.category,
-            value: values.value,
+            casesRegistered: values.casesRegistered,
+            casesSolved: values.casesSolved,
             date: Timestamp.fromDate(values.date),
         };
 
@@ -157,12 +163,12 @@ export function ManualForm() {
                 />
                 <FormField
                 control={form.control}
-                name="value"
+                name="casesRegistered"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>{t('Value')}</FormLabel>
+                    <FormLabel>{t('Cases Registered')}</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder={t("Enter performance value")} {...field} />
+                        <Input type="number" placeholder={t("Enter number of cases registered")} {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -170,9 +176,22 @@ export function ManualForm() {
                 />
                 <FormField
                 control={form.control}
+                name="casesSolved"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t('Cases Solved')}</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder={t("Enter number of cases solved")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
                 name="date"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2">
+                    <FormItem className="flex flex-col pt-2 md:pt-0">
                     <FormLabel>{t('Date')}</FormLabel>
                     <Popover>
                         <PopoverTrigger asChild>

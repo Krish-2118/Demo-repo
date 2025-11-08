@@ -33,8 +33,8 @@ import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 type ScoreData = {
     id: number;
     name: string;
-    score: number;
-} & Record<string, number>;
+    totalCasesSolved: number;
+} & Record<string, { registered: number; solved: number }>;
 
 
 export function LeaderboardTable() {
@@ -63,15 +63,15 @@ export function LeaderboardTable() {
         const districtScores = new Map<number, ScoreData>();
         
         districts.forEach(district => {
-            const initialScores: Record<string, number> = {};
+            const initialScores: Record<string, { registered: number; solved: number }> = {};
             translatedCategories.forEach(cat => {
-                initialScores[cat.label] = 0;
+                initialScores[cat.label] = { registered: 0, solved: 0 };
             });
 
             districtScores.set(district.id, {
                 id: district.id,
                 name: t(district.name),
-                score: 0,
+                totalCasesSolved: 0,
                 ...initialScores
             });
         });
@@ -80,16 +80,17 @@ export function LeaderboardTable() {
             if(!record.districtId) return;
             const districtData = districtScores.get(record.districtId);
             if (districtData) {
-                districtData.score += record.value;
+                districtData.totalCasesSolved += record.casesSolved;
                 const categoryLabel = t(categoryLabels[record.category as Category]);
                 if (categoryLabel in districtData) {
-                    districtData[categoryLabel] += record.value;
+                    districtData[categoryLabel].registered += record.casesRegistered;
+                    districtData[categoryLabel].solved += record.casesSolved;
                 }
             }
         });
         
         const sortedData = Array.from(districtScores.values())
-            .sort((a, b) => b.score - a.score);
+            .sort((a, b) => b.totalCasesSolved - a.totalCasesSolved);
 
         return sortedData.map(d => ({...d, name: t(districts.find(dist => dist.id === d.id)?.name || '')}));
 
@@ -102,10 +103,15 @@ export function LeaderboardTable() {
 
         startGenerating(async () => {
             try {
-                // Find the 3 worst-performing categories
+                // Find the 3 worst-performing categories based on solve rate
                 const performanceData = translatedCategories
-                    .map(cat => ({ category: cat.label, value: districtData[cat.label] }))
-                    .sort((a, b) => a.value - b.value)
+                    .map(cat => {
+                        const registered = districtData[cat.label].registered;
+                        const solved = districtData[cat.label].solved;
+                        const solveRate = registered > 0 ? (solved / registered) * 100 : 0;
+                        return { category: cat.label, solveRate, casesRegistered: registered, casesSolved: solved };
+                    })
+                    .sort((a, b) => a.solveRate - b.solveRate)
                     .slice(0, 3);
                 
                 const result = await generateImprovementSuggestions({
@@ -146,7 +152,7 @@ export function LeaderboardTable() {
         <Card className="rounded-xl shadow-lg">
             <CardHeader>
                 <CardTitle>{t('District Leaderboard')}</CardTitle>
-                <CardDescription>{t('Based on overall performance score from live data across all categories.')}</CardDescription>
+                <CardDescription>{t('Based on total cases solved across all categories.')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="w-full whitespace-nowrap rounded-md border">
@@ -158,7 +164,7 @@ export function LeaderboardTable() {
                             {translatedCategories.map(cat => (
                                 <TableHead key={cat.key} className="text-right whitespace-nowrap">{cat.label}</TableHead>
                             ))}
-                            <TableHead className="text-right font-bold sticky right-[120px] bg-background">{t('Overall Score')}</TableHead>
+                            <TableHead className="text-right font-bold sticky right-[120px] bg-background">{t('Total Cases Solved')}</TableHead>
                             <TableHead className="text-center sticky right-0 bg-background">{t('Actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -184,9 +190,9 @@ export function LeaderboardTable() {
                                     </TableCell>
                                     <TableCell className="font-medium sticky left-[80px] bg-inherit">{item.name}</TableCell>
                                     {translatedCategories.map(cat => (
-                                        <TableCell key={cat.key} className="text-right">{item[cat.label].toLocaleString()}</TableCell>
+                                        <TableCell key={cat.key} className="text-right">{item[cat.label].solved.toLocaleString()}</TableCell>
                                     ))}
-                                    <TableCell className="text-right font-bold text-primary sticky right-[120px] bg-inherit">{item.score.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary sticky right-[120px] bg-inherit">{item.totalCasesSolved.toLocaleString()}</TableCell>
                                     <TableCell className="text-center sticky right-0 bg-inherit">
                                         {index > 2 && (
                                             <Button 
