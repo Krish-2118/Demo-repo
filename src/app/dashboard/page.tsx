@@ -42,6 +42,7 @@ const processRecords = (records: any[] | null): PerformanceRecord[] => {
 };
 
 export default function DashboardPage() {
+  const [isClient, setIsClient] = useState(false);
   const [filters, setFilters] = useState<{
     district: string;
     category: Category | 'all';
@@ -60,6 +61,10 @@ export default function DashboardPage() {
 
   const processedRecords = useMemo(() => processRecords(allRecords), [allRecords]);
   
+  useEffect(() => {
+      setIsClient(true);
+  }, []);
+
   useEffect(() => {
     if (processedRecords.length > 0 && !isDateRangeSet) {
       const dates = processedRecords.map(r => r.date.getTime());
@@ -127,19 +132,25 @@ export default function DashboardPage() {
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
-    const initialData = { NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
-    districts.forEach(d => performanceMap.set(d.name, { name: d.name, ...initialData }));
+    const initialData: Record<Category, number> = {
+        'NBW': 0, 'Conviction': 0, 'Narcotics': 0, 'Missing Person': 0, 'Firearms': 0, 
+        'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
+    };
+
+    districts.forEach(d => performanceMap.set(d.name, { 
+        name: d.name, 
+        ...Object.fromEntries(Object.keys(initialData).map(k => [k, 0]))
+    }));
 
     filteredRecords.forEach(r => {
         const district = districts.find(d => d.id === r.districtId);
         if (district) {
             const current = performanceMap.get(district.name);
-            if (current) {
+            if (current && r.category in initialData) {
                 current[r.category] = (current[r.category] || 0) + r.value;
             }
         }
     });
-
     return Array.from(performanceMap.values());
   }, [filteredRecords]);
 
@@ -151,7 +162,10 @@ export default function DashboardPage() {
     for (let i = 0; i < 6; i++) {
         const date = startOfMonth(subMonths(new Date(), 5 - i));
         const month = format(date, 'MMM yyyy');
-        const initialData = { month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0 };
+        const initialData = { 
+            month, NBW: 0, Conviction: 0, Narcotics: 0, 'Missing Person': 0, 'Firearms': 0, 
+            'Sand Mining': 0, 'Preventive Actions': 0, 'Important Detections': 0
+        };
         trendMap.set(month, initialData);
     }
 
@@ -164,29 +178,47 @@ export default function DashboardPage() {
       const month = format(startOfMonth(record.date), 'MMM yyyy');
       const monthData = trendMap.get(month);
       if (monthData && (filters.district === 'all' || record.districtId === parseInt(districts.find(d => d.name.toLowerCase() === filters.district)?.id.toString() || '0'))) {
-        monthData[record.category] += record.value;
+        if(record.category in monthData){
+            monthData[record.category] += record.value;
+        }
       }
     });
 
     return Array.from(trendMap.values());
 
   }, [processedRecords, filters.district]);
+  
+  if (!isClient) {
+    return null; // Render nothing on the server
+  }
 
   return (
     <div className="flex-1 space-y-4">
-      <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpiData.map((metric) => (
-          <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
-        ))}
-      </div>
-      <div className="grid gap-4">
-        <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <DistrictComparisonChart data={districtPerformance} isLoading={recordsLoading} />
-        <TrendChart data={trendData} isLoading={recordsLoading} />
-      </div>
+        <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                <AiSummary kpiData={kpiData} isLoading={recordsLoading} />
+            </div>
+             <div className="lg:col-start-2">
+                {/* The NaturalLanguageQuery component was here */}
+            </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {kpiData.map((metric) => (
+                <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
+            ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+            <DistrictComparisonChart 
+                data={districtPerformance} 
+                isLoading={recordsLoading}
+            />
+            <TrendChart 
+                data={trendData} 
+                isLoading={recordsLoading}
+            />
+        </div>
     </div>
   );
 }
