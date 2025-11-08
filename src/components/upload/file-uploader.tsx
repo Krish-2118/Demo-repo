@@ -7,30 +7,36 @@ import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { DataPreview } from './data-preview';
 import { useFirestore } from '@/firebase/client';
-import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
+import { collection, writeBatch, doc, Timestamp, Firestore } from 'firebase/firestore';
 import { districts } from '@/lib/data';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
 
-async function uploadPerformanceData(firestore: any, data: any[]) {
+async function uploadPerformanceData(firestore: Firestore, data: any[]) {
+    if (!firestore) {
+        throw new Error('Firestore is not initialized.');
+    }
     const recordsCollection = collection(firestore, 'records');
     const districtMap = new Map(districts.map(d => [d.name.toLowerCase(), d.id]));
     const batch = writeBatch(firestore);
     let recordsAdded = 0;
 
     for (const row of data) {
-        const districtName = row['District']?.toString().trim().toLowerCase();
-        const districtId = districtMap.get(districtName);
+        // Handle both direct properties (from manual entry) and capitalized properties (from file parsing)
+        const districtName = (row.District || row.districtName)?.toString().trim().toLowerCase();
+        const districtId = row.districtId || districtMap.get(districtName);
 
         if (!districtId) {
-            console.warn(`District not found, skipping row:`, row);
+            console.warn(`District not found or invalid, skipping row:`, row);
             continue;
         }
 
-        const dateValue = row['Date'];
+        const dateValue = row.Date || row.date;
         let recordDate: Date;
 
         if (dateValue instanceof Date) {
             recordDate = dateValue;
+        } else if (dateValue && dateValue.toDate instanceof Function) { // Check for Firestore Timestamp
+            recordDate = dateValue.toDate();
         } else if (typeof dateValue === 'number') { // Handle Excel date serial numbers
             recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
         } else if (typeof dateValue === 'string') {
@@ -39,14 +45,14 @@ async function uploadPerformanceData(firestore: any, data: any[]) {
             console.warn(`Invalid date format, skipping row:`, row);
             continue;
         }
-
+        
         if (isNaN(recordDate.getTime())) {
             console.warn(`Invalid date value, skipping row:`, row);
             continue;
         }
 
-        const category = row['Category'];
-        const value = Number(row['Value']);
+        const category = row.Category || row.category;
+        const value = Number(row.Value || row.value);
 
         if (!category || isNaN(value)) {
             console.warn('Invalid category or value, skipping row:', row);
@@ -119,12 +125,22 @@ export function FileUploader() {
                     const dataUrl = event.target?.result as string;
                     if (!dataUrl) throw new Error("Could not read PDF file.");
                     
-                    const result = await extractDataFromPdf({ pdfDataUri: dataUrl });
-                    setParsedData(result.data);
                     toast({
-                        title: 'PDF Processing Complete',
-                        description: 'Please review the extracted data preview below.',
+                        title: 'Extracting Data from PDF',
+                        description: 'This may take a moment...',
                     });
+
+                    const result = await extractDataFromPdf({ pdfDataUri: dataUrl });
+                    
+                    if (result && result.data) {
+                        setParsedData(result.data);
+                        toast({
+                            title: 'PDF Processing Complete',
+                            description: 'Please review the extracted data preview below.',
+                        });
+                    } else {
+                         throw new Error("AI could not extract data from the PDF.");
+                    }
 
                 } catch (error) {
                     handleError(error, 'Error processing PDF.');
@@ -197,6 +213,7 @@ export function FileUploader() {
             description: 'Submitting records to the database...',
         });
         try {
+            if (!firestore) throw new Error("Firestore not available");
             const recordsAdded = await uploadPerformanceData(firestore, parsedData);
             
             if (recordsAdded > 0) {
