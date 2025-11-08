@@ -183,12 +183,24 @@ export function LeaderboardTable() {
                                     <TableCell className="text-right font-bold text-primary">{item.score.toLocaleString()}</TableCell>
                                     <TableCell className="text-center">
                                         {index > 2 && (
-                                            <Button variant="outline" size="sm" onClick={() => handleGetSuggestions(item)} disabled={isGenerating && selectedDistrict?.id === item.id}>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => handleGetSuggestions(item)} 
+                                                disabled={isGenerating && selectedDistrict?.id === item.id}
+                                                className="w-[180px]"
+                                            >
                                                 {isGenerating && selectedDistrict?.id === item.id ? 
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :
-                                                    <Lightbulb className="mr-2 h-4 w-4" />
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        {t('Generating suggestions...')}
+                                                    </>
+                                                    :
+                                                    <>
+                                                        <Lightbulb className="mr-2 h-4 w-4" />
+                                                        {t('Get Suggestions')}
+                                                    </>
                                                 }
-                                                {t('Get Suggestions')}
                                             </Button>
                                         )}
                                     </TableCell>
