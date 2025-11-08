@@ -2,17 +2,23 @@
 
 import { generateDistrictPerformanceSummary } from '@/ai/flows/generate-district-performance-summary';
 import { extractDataFromPdf } from '@/ai/flows/extract-data-from-pdf';
-import { getApps, initializeApp, App } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { districts } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
 // Helper to initialize Firebase Admin and return Firestore instance
-function getAdminFirestore(): Firestore {
+function getAdminFirestore() {
   if (!getApps().length) {
-    // In a managed environment like App Hosting, initializeApp() discovers credentials automatically.
-    // When GOOGLE_APPLICATION_CREDENTIALS is set in .env, it will use that.
-    initializeApp();
+    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!serviceAccountString) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+    }
+    const serviceAccount = JSON.parse(serviceAccountString);
+
+    initializeApp({
+        credential: cert(serviceAccount)
+    });
   }
   return getFirestore();
 }
@@ -42,18 +48,19 @@ export async function uploadManualRecord(data: {districtId: number, category: st
       districtId: data.districtId,
       category: data.category,
       value: Number(data.value),
-      date: data.date.toISOString(),
+      date: Timestamp.fromDate(data.date),
     };
 
     await firestore.collection('records').add(record);
     
+    // Revalidate paths to trigger data refetch on relevant pages
     revalidatePath('/dashboard');
     revalidatePath('/leaderboard');
 
     return { success: true, message: 'Record added successfully.' };
   } catch (error) {
     console.error('Error uploading manual record:', error);
-    return { success: false, message: 'Failed to add record.' };
+    return { success: false, message: `Failed to add record: ${(error as Error).message}` };
   }
 }
 
@@ -81,7 +88,7 @@ export async function uploadPerformanceData(data: any[]) {
         
         if (dateValue instanceof Date) {
             recordDate = dateValue;
-        } else if (typeof dateValue === 'number') { 
+        } else if (typeof dateValue === 'number') { // Handle Excel date serial numbers
             recordDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
         } else if (typeof dateValue === 'string') {
             recordDate = new Date(dateValue);
@@ -107,7 +114,7 @@ export async function uploadPerformanceData(data: any[]) {
             districtId: districtId,
             category: category,
             value: value,
-            date: recordDate.toISOString(),
+            date: Timestamp.fromDate(recordDate),
         };
 
         const docRef = recordsCollection.doc();
@@ -121,13 +128,14 @@ export async function uploadPerformanceData(data: any[]) {
 
     await batch.commit();
 
+    // Revalidate paths to trigger data refetch on relevant pages
     revalidatePath('/dashboard');
     revalidatePath('/leaderboard');
 
     return { success: true, message: `${recordsAdded} records uploaded successfully.` };
   } catch (error) {
     console.error('Error uploading data:', error);
-    return { success: false, message: 'Failed to upload data due to a server error.' };
+    return { success: false, message: `Failed to upload data: ${(error as Error).message}` };
   }
 }
 
