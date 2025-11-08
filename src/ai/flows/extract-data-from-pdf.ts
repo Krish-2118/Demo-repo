@@ -11,7 +11,7 @@ import {
   ExtractDataFromPdfOutputSchema,
   type ExtractDataFromPdfInput,
   type ExtractDataFromPdfOutput
-} from '@/lib/types/pdf-extraction';
+} from '@/lib/types';
 
 
 export async function extractDataFromPdf(input: ExtractDataFromPdfInput): Promise<ExtractDataFromPdfOutput> {
