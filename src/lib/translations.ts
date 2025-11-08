@@ -119,6 +119,12 @@ export const translations = {
     'Important Detections': 'ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ସନ୍ଧାନ',
     'Not enough data to generate an insight. Please select a different date range or district.': 'ଏକ ଇନସାଇଟ୍ ସୃଷ୍ଟି କରିବାକୁ ପର୍ଯ୍ୟାପ୍ତ ଡାଟା ନାହିଁ | ଦୟାକରି ଏକ ଭିନ୍ନ ତାରିଖ ସୀମା କିମ୍ବା ଜିଲ୍ଲା ଚୟନ କରନ୍ତୁ |',
     'Could not generate an AI insight at this time.': 'ଏହି ସମୟରେ ଏକ AI ଇନସାଇଟ୍ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
-    "Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.": "ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ଫାଇଲରେ ସ୍ୱୀକୃତିପ୍ରାପ୍ତ ଜିଲ୍ଲା ଏବଂ ତାରିଖ ସହିତ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ଫାଇଲ୍ ବିଷୟବସ୍ତୁ ଏବଂ ଫର୍ମାଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ।"
+    'Upload failed. No valid records with recognizable districts and dates were found in the file. Please check the file content and format.': 'ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ଫାଇଲରେ ସ୍ୱୀକୃତିପ୍ରାପ୍ତ ଜିଲ୍ଲା ଏବଂ ତାରିଖ ସହିତ କୌଣସି ବୈଧ ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଦୟାକରି ଫାଇଲ୍ ବିଷୟବସ୍ତୁ ଏବଂ ଫର୍ମାଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ।',
+    'Actions': 'କାର୍ଯ୍ୟାନୁଷ୍ଠାନ',
+    'Get Suggestions': 'ପରାମର୍ଶ ପାଆନ୍ତୁ',
+    'Could not generate suggestions at this time.': 'ଏହି ସମୟରେ ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଇପାରିଲା ନାହିଁ |',
+    'AI Improvement Suggestions for': 'ପାଇଁ AI ଉନ୍ନତି ପରାମର୍ଶ',
+    'Based on the lowest performing categories, here are some actionable recommendations.': 'ସବୁଠାରୁ କମ୍ ପ୍ରଦର୍ଶନ କରୁଥିବା ବର୍ଗଗୁଡିକ ଉପରେ ଆଧାର କରି, ଏଠାରେ କିଛି କାର୍ଯ୍ୟକ୍ଷମ ସୁପାରିଶ ଦିଆଯାଇଛି |',
+    'Generating suggestions...': 'ପରାମର୍ଶ ସୃଷ୍ଟି କରାଯାଉଛି...'
   }
 };
