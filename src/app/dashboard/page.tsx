@@ -14,7 +14,8 @@ import { useCollection } from '@/hooks/use-collection';
 import { collection, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/client';
 import { useTranslation } from '@/context/translation-context';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { CaseDetailsGroup } from '@/components/dashboard/case-details-group';
+
 
 const iconMap: Record<Category, React.ReactNode> = {
   'Cases Registered': <FolderOpen className="h-4 w-4 text-muted-foreground" />,
@@ -35,6 +36,14 @@ const iconMap: Record<Category, React.ReactNode> = {
   'Road Accidents': <CarFront className="h-4 w-4 text-muted-foreground" />,
   'Others': <ClipboardList className="h-4 w-4 text-muted-foreground" />,
 };
+
+const caseDetailCategories: Category[] = [
+    'Cases Registered',
+    'Cases Solved',
+    'Total Convictions',
+    'Heinous Crime Cases',
+    'Property Crime Cases',
+];
 
 // This function converts Firestore Timestamps to Date objects
 const processRecords = (records: any[] | null): PerformanceRecord[] => {
@@ -125,7 +134,7 @@ export default function DashboardPage() {
   const kpiData = useMemo((): PerformanceMetric[] => {
     const categories: Category[] = Object.keys(categoryLabels) as Category[];
     
-    const data = categories.map(category => {
+    return categories.map(category => {
       const currentMonthValue = filteredRecords
         .filter(r => r.category === category)
         .reduce((sum, r) => sum + r.value, 0);
@@ -145,8 +154,14 @@ export default function DashboardPage() {
         change: change,
       };
     });
-    return data;
   }, [filteredRecords, prevMonthRecords, t]);
+  
+  const { caseDetailsKpi, otherKpi } = useMemo(() => {
+    const caseDetailsKpi = kpiData.filter(m => caseDetailCategories.includes(m.category));
+    const otherKpi = kpiData.filter(m => !caseDetailCategories.includes(m.category));
+    return { caseDetailsKpi, otherKpi };
+  }, [kpiData]);
+
 
   const districtPerformance = useMemo(() => {
     const performanceMap = new Map<string, any>();
@@ -221,14 +236,12 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4">
         <Filters onFilterChange={setFilters} initialFilters={filters} allRecords={filteredRecords ?? []} />
         
-        <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-          <div className="flex w-max space-x-4 pb-4">
-            {kpiData.map((metric) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <CaseDetailsGroup metrics={caseDetailsKpi} iconMap={iconMap} isLoading={recordsLoading} />
+            {otherKpi.map((metric) => (
                 <KpiCard key={metric.category} metric={metric} icon={iconMap[metric.category]} isLoading={recordsLoading} />
             ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </div>
 
         <div className="grid grid-cols-1 gap-4">
           <AiSummary districtPerformance={districtPerformance} isLoading={recordsLoading} />
