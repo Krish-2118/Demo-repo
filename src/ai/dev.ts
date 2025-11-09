@@ -1,7 +1,7 @@
 'use server';
-import { config } from 'dotenv';
-// Load environment variables from .env file
-config({ path: '.env' });
+
+const apiKey = process.env.GEMINI_API_KEY; // Example
+
 
 import '@/ai/flows/generate-district-performance-summary.ts';
 import '@/ai/flows/extract-data-from-pdf.ts';

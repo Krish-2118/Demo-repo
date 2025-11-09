@@ -75,20 +75,28 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (processedRecords.length > 0 && !isDateRangeSet) {
-      const dates = processedRecords.map(r => r.date.getTime()).filter(t => !isNaN(t));
-      if(dates.length > 0) {
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
-        
-        setFilters(prevFilters => ({
-          ...prevFilters,
-          dateRange: { from: minDate, to: maxDate }
-        }));
-        setIsDateRangeSet(true);
-      }
+  if (processedRecords.length > 0 && !isDateRangeSet) {
+
+    const dates = processedRecords
+      .map(r => {
+        const d = r.date instanceof Date ? r.date : r.date.toDate();
+        return d.getTime();
+      })
+      .filter(t => !isNaN(t));
+
+    if (dates.length > 0) {
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        dateRange: { from: minDate, to: maxDate }
+      }));
+      setIsDateRangeSet(true);
     }
-  }, [processedRecords, isDateRangeSet]);
+  }
+}, [processedRecords, isDateRangeSet]);
+
 
   const previousMonthDateRange = useMemo(() => {
     if (!filters.dateRange.from) return { from: undefined, to: undefined };
@@ -211,7 +219,8 @@ export default function DashboardPage() {
     const selectedCategory = filters.category;
 
     relevantRecords.forEach(record => {
-      const month = monthFormatter.format(startOfMonth(record.date));
+      const dateObj = record.date instanceof Timestamp ? record.date.toDate() : record.date;
+      const month = monthFormatter.format(startOfMonth(dateObj));
       const monthData = trendMap.get(month);
 
       if (monthData && (filters.district === 'all' || record.districtId === selectedDistrictId) && (selectedCategory === 'all' || record.category === selectedCategory)) {
