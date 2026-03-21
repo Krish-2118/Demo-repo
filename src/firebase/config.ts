@@ -1,9 +1,33 @@
-// Your web app's Firebase configuration
+const getRequiredEnv = (value: string | undefined, name: string): string => {
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
+
 export const firebaseConfig = {
-  apiKey: "AIzaSyAhrlx0H7Fszp9IHQia_OJINLtACwIobyI",
-  authDomain: "studio-5181853150-13083.firebaseapp.com",
-  projectId: "studio-5181853150-13083",
-  storageBucket: "studio-5181853150-13083.appspot.com",
-  messagingSenderId: "82730282935",
-  appId: "1:82730282935:web:5da3b650a00510fbba0232"
+  apiKey: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    "NEXT_PUBLIC_FIREBASE_API_KEY",
+  ),
+  authDomain: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+  ),
+  projectId: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+  ),
+  storageBucket: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+  ),
+  messagingSenderId: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+  ),
+  appId: getRequiredEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    "NEXT_PUBLIC_FIREBASE_APP_ID",
+  ),
 };

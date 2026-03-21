@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,45 +11,49 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { districts, categoryLabels } from '@/lib/data';
-import type { Category } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { useFirestore } from '@/firebase/client';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { useTranslation } from '@/context/translation-context';
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { districts, categoryLabels } from "@/lib/data";
+import type { Category } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { useTransition } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useFirestore } from "@/firebase/client";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { useTranslation } from "@/context/translation-context";
 
-const formSchema = z.object({
-  district: z.string().min(1, 'Please select a district.'),
-  category: z.string().min(1, 'Please select a category.'),
-  casesRegistered: z.coerce.number().min(0, 'Value must be a positive number.'),
-  casesSolved: z.coerce.number().min(0, 'Value must be a positive number.'),
-  date: z.date({
-    required_error: 'A date is required.',
-  }),
-}).refine(data => data.casesSolved <= data.casesRegistered, {
+const formSchema = z
+  .object({
+    district: z.string().min(1, "Please select a district."),
+    category: z.string().min(1, "Please select a category."),
+    casesRegistered: z.coerce
+      .number()
+      .min(0, "Value must be a positive number."),
+    casesSolved: z.coerce.number().min(0, "Value must be a positive number."),
+    date: z.date({
+      required_error: "A date is required.",
+    }),
+  })
+  .refine((data) => data.casesSolved <= data.casesRegistered, {
     message: "Cases solved cannot be greater than cases registered.",
     path: ["casesSolved"],
-});
+  });
 
 export function ManualForm() {
   const { toast } = useToast();
@@ -60,8 +64,8 @@ export function ManualForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      district: '',
-      category: '',
+      district: "",
+      category: "",
       casesRegistered: 0,
       casesSolved: 0,
       date: new Date(),
@@ -70,167 +74,192 @@ export function ManualForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) {
-        toast({ title: t('Error'), description: t('Firestore not initialized.'), variant: 'destructive' });
-        return;
+      toast({
+        title: t("Error"),
+        description: t("Firestore not initialized."),
+        variant: "destructive",
+      });
+      return;
     }
 
     startTransition(async () => {
       try {
         const record = {
-            districtId: parseInt(values.district),
-            category: values.category,
-            casesRegistered: values.casesRegistered,
-            casesSolved: values.casesSolved,
-            date: Timestamp.fromDate(values.date),
+          districtId: parseInt(values.district),
+          category: values.category,
+          casesRegistered: values.casesRegistered,
+          casesSolved: values.casesSolved,
+          date: Timestamp.fromDate(values.date),
         };
 
-        await addDoc(collection(firestore, 'records'), record);
+        await addDoc(collection(firestore, "records"), record);
 
         toast({
-            title: t('Record Saved'),
-            description: t('The performance record has been saved successfully.'),
+          title: t("Record Saved"),
+          description: t("The performance record has been saved successfully."),
         });
         form.reset();
-        form.setValue('date', new Date()); // Reset date to today
-        
+        form.setValue("date", new Date()); // Reset date to today
       } catch (error) {
         toast({
-          title: t('Save Failed'),
+          title: t("Save Failed"),
           description:
-            (error as Error).message || t('An unexpected error occurred.'),
-          variant: 'destructive',
+            (error as Error).message || t("An unexpected error occurred."),
+          variant: "destructive",
         });
       }
     });
   }
 
   return (
-    <Card className="rounded-xl shadow-lg mt-6">
+    <Card className="rounded-xl shadow-lg">
       <CardHeader>
-        <CardTitle>{t('Manual Data Entry')}</CardTitle>
+        <CardTitle>{t("Manual Data Entry")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid md:grid-cols-2 gap-8">
-                <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid gap-5 sm:gap-6 md:grid-cols-2">
+              <FormField
                 control={form.control}
                 name="district"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>{t('District')}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
-                        <FormControl>
+                  <FormItem>
+                    <FormLabel>{t("District")}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue=""
+                    >
+                      <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder={t('Select a district')} />
+                          <SelectValue placeholder={t("Select a district")} />
                         </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {districts.map(d => (
-                            <SelectItem key={d.id} value={d.id.toString()}>
-                                {t(d.name)}
-                            </SelectItem>
+                      </FormControl>
+                      <SelectContent>
+                        {districts.map((d) => (
+                          <SelectItem key={d.id} value={d.id.toString()}>
+                            {t(d.name)}
+                          </SelectItem>
                         ))}
-                        </SelectContent>
+                      </SelectContent>
                     </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>{t('Category')}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
-                        <FormControl>
+                  <FormItem>
+                    <FormLabel>{t("Category")}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue=""
+                    >
+                      <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder={t('Select a category')} />
+                          <SelectValue placeholder={t("Select a category")} />
                         </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {(Object.keys(categoryLabels) as Category[]).map((cat) => (
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(categoryLabels) as Category[]).map(
+                          (cat) => (
                             <SelectItem key={cat} value={cat}>
-                                {t(categoryLabels[cat])}
+                              {t(categoryLabels[cat])}
                             </SelectItem>
-                        ))}
-                        </SelectContent>
+                          ),
+                        )}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="casesRegistered"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>{t('Cases Registered')}</FormLabel>
+                  <FormItem>
+                    <FormLabel>{t("Cases Registered")}</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder={t("Enter number of cases registered")} {...field} />
+                      <Input
+                        type="number"
+                        placeholder={t("Enter number of cases registered")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="casesSolved"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>{t('Cases Solved')}</FormLabel>
+                  <FormItem>
+                    <FormLabel>{t("Cases Solved")}</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder={t("Enter number of cases solved")} {...field} />
+                      <Input
+                        type="number"
+                        placeholder={t("Enter number of cases solved")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                 <FormField
+              />
+              <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2 md:pt-0">
-                    <FormLabel>{t('Date')}</FormLabel>
+                  <FormItem className="flex flex-col pt-2 md:pt-0">
+                    <FormLabel>{t("Date")}</FormLabel>
                     <Popover>
-                        <PopoverTrigger asChild>
+                      <PopoverTrigger asChild>
                         <FormControl>
-                            <Button
-                            variant={'outline'}
+                          <Button
+                            variant={"outline"}
                             className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
                             )}
-                            >
+                          >
                             {field.value ? (
-                                format(field.value, 'PPP')
+                              format(field.value, "PPP")
                             ) : (
-                                <span>{t('Pick a date')}</span>
+                              <span>{t("Pick a date")}</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                          </Button>
                         </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                            date > new Date() || date < new Date('1900-01-01')
-                            }
-                            initialFocus
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
                         />
-                        </PopoverContent>
+                      </PopoverContent>
                     </Popover>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
             </div>
-            <Button type="submit" disabled={isPending}>
-                {isPending ? t('Saving...') : t('Save Record')}
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
+              {isPending ? t("Saving...") : t("Save Record")}
             </Button>
           </form>
         </Form>
