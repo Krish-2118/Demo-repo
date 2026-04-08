@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Trophy, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/context/translation-context";
+import { useAuthContext } from "@/context/auth-context";
 import {
   Tooltip,
   TooltipContent,
@@ -25,11 +26,14 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const { role } = useAuthContext();
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: t("Dashboard") },
     { href: "/leaderboard", icon: Trophy, label: t("Leaderboard") },
-    { href: "/upload", icon: Upload, label: t("Upload Data") },
+    ...(role === "admin"
+      ? [{ href: "/upload", icon: Upload, label: t("Upload Data") }]
+      : []),
   ];
 
   const renderLink = (item: (typeof navItems)[number]) => (

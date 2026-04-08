@@ -37,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useFirestore } from "@/firebase/client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { useTranslation } from "@/context/translation-context";
+import { useAuthContext } from "@/context/auth-context";
 
 const formSchema = z
   .object({
@@ -60,6 +61,7 @@ export function ManualForm() {
   const [isPending, startTransition] = useTransition();
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const { isAdmin } = useAuthContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,6 +75,15 @@ export function ManualForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isAdmin) {
+      toast({
+        title: t("Access denied"),
+        description: t("Only admin users can upload records."),
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!firestore) {
       toast({
         title: t("Error"),
@@ -256,7 +267,7 @@ export function ManualForm() {
             </div>
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !isAdmin}
               className="w-full sm:w-auto"
             >
               {isPending ? t("Saving...") : t("Save Record")}

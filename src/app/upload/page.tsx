@@ -4,9 +4,30 @@ import { FileUploader } from "@/components/upload/file-uploader";
 import { ManualForm } from "@/components/upload/manual-form";
 import { TextUploader } from "@/components/upload/text-uploader";
 import { useTranslation } from "@/context/translation-context";
+import { useAuthContext } from "@/context/auth-context";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function UploadPage() {
   const { t } = useTranslation();
+  const { role } = useAuthContext();
+
+  if (role !== "admin") {
+    return (
+      <div className="mx-auto w-full max-w-2xl py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("Access restricted")}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {t(
+              "Only admin users can upload records. Viewer accounts can still access Dashboard and Leaderboard.",
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl py-2 sm:py-4 space-y-6 sm:space-y-8 stagger-in">
       <div className="space-y-2">
